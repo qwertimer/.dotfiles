@@ -1,0 +1,1 @@
+/home/tim/.config/nvim/onedark.vim/colors/onedark.vim
