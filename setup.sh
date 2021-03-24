@@ -41,6 +41,7 @@ stow_conf() {
 	stow -v -R -t ${usr}/.config/ ${app}
 }
 
+
 echo ""
 echo "Stowing apps for user: ${whoami}"
 

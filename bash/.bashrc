@@ -218,7 +218,9 @@ ex ()
 }
 
 export PATH="$HOME/bin/$:$PATH"
+export PATH="$HOME/bin/:$PATH"
 export PATH="$PATH:~/.local/bin"
+export PATH="$PATH:/home/tim/.local/bin"
 
 #create a file called .bashrc-personal and put all your personal aliases
 #in there. They will not be overwritten by skel.

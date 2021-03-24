@@ -94,6 +94,7 @@ source $ZSH/oh-my-zsh.sh
 
 export PATH="$PATH:$HOME/bin/$"
 export PATH="$PATH:~/.local/bin"
+export PATH="$PATH:/home/tim/.local/bin"
 # Compilation flags`
 # export ARCHFLAGS="-arch x86_64"
 
