@@ -1,0 +1,6 @@
+[submodule "__setup/emacs_docker"]
+	path = __setup/emacs_docker
+	url = https://github.com/qwertimer/emacs_docker
+[submodule "__setup/lynx_docker"]
+	path = __setup/lynx_docker
+	url = https://github.com/qwertimer/lynx_docker
