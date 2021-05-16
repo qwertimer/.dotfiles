@@ -21,6 +21,9 @@ conf=(
 	nvim
 )
 
+scripts=(
+    __setup
+)
 
 #folders that will need to be stored in the .config location
 
@@ -60,6 +63,14 @@ echo "Stowing config files"
 for app in ${conf[@]}; do
 	stow_conf "${HOME}" $app
 done
+
+echo "adding scripts to path"
+
+echo "PATH='$PATH:./$scripts'" >> ~/.bashrc-personal
+
+
+
+
 
 echo ""
 echo "##### ALL DONE"
