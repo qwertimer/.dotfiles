@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+
 
 # make sure we have pulled in and updated any submodules
 git submodule init
@@ -19,10 +19,11 @@ useronly=(
 conf=(
 	tmux
 	nvim
+    xmobar
+    xmonad
 )
-
 scripts=(
-    __setup
+.dotfiles/scripts
 )
 
 #folders that will need to be stored in the .config location
@@ -44,6 +45,16 @@ stow_conf() {
 	stow -v -R -t ${usr}/.config/ ${app}
 }
 
+pathappend() {
+  for ARG in "$@"; do
+    test -d "${ARG}" || continue
+    case ":${PATH}:" in
+    *:${ARG}:*) continue ;;
+    esac
+    export PATH="${PATH:+"${PATH}:"}${ARG}"
+    echo $PATH
+  done
+}
 
 echo ""
 echo "Stowing apps for user: ${whoami}"
@@ -65,8 +76,20 @@ for app in ${conf[@]}; do
 done
 
 echo "adding scripts to path"
+if test ~/.bashrc-personal; then
+    echo "bashrc found"
+    #if grep "PATH" ~/.bashrc-personal
+    #then 
+    #    if grep ${scripts[0]} ~/.bashrc-personal
 
-echo "PATH='$PATH:./$scripts'" >> ~/.bashrc-personal
+    #    then 
+    #        echo "scripts exists skipping"
+    #    else
+    #    echo "path found"
+    pathappend "$PWD/scripts/"
+    #    fi
+    #fi
+fi
 
 
 
