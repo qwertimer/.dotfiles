@@ -1,8 +1,8 @@
-#!/usr/bin/bash
+#!/bin/bash
 
-NAME='Rob Muhlestein'
-USER=rwxrob
-EMAIL='rwx@robs.io'
+NAME='Qwertimer'
+USER=qwertimer
+EMAIL='delltim@gmail.com'
 TOKEN=$(auth token gitlab)
 
 delete () {

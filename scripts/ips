@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### Gets the names of all ip devices
+
 getnics () {
   while IFS= read -r line; do
     echo ${line%% *}
