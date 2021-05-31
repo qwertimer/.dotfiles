@@ -16,6 +16,7 @@ ZETDIR="${ZETDIR:-$HOME/.local/share}"
 test -z "$GITUSER" && echo "GITUSER not set." && exit 1
 
 EXE=${0##*/}
+echo "$EXE"
 test -z "$EXE" && echo "Could not determine name of executable." && exit 1
 
 # Add creates a Zettelkasten repo entry with an isosec unique directory
