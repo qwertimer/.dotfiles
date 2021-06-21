@@ -1,0 +1,21 @@
+#!/bin/sh
+
+
+send_msg(){
+
+	touch $HOME/Documents/mail.txt &>/dev/null
+	#TMP=$(mktemp)
+	IP=`dig +short myip.opendns.com @resolver1.opendns.com`
+	OLD_IP=`cat $HOME/Documents/mail.txt`
+	if test  "$IP" != "$OLD_IP"; then
+
+    	    echo "$IP" > $HOME/Documents/mail.txt
+	    curl --ssl-reqd \
+	    --netrc \
+	    --url 'smtps://smtp.gmail.com:465' \
+            --mail-from "$1" \
+            --mail-rcpt "$1" \
+            --upload-file $HOME/Documents/mail.txt
+	fi 
+}
+send_msg "$1"

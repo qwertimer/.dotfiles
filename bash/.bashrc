@@ -1,236 +1,245 @@
-#
-# ~/.bashrc
-#
-
-#Ibus settings if you need them
-#type ibus-setup in terminal to change settings and start the daemon
-#delete the hashtags of the next lines and restart
-#export GTK_IM_MODULE=ibus
-#export XMODIFIERS=@im=dbus
-#export QT_IM_MODULE=ibus
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
 
 # If not running interactively, don't do anything
-test $- != *i* && return
-
-export HISTCONTROL=ignoreboth:erasedups
-
-
-test -d "$HOME/.bin" ; then 
-  PATH="$HOME/.bin:$PATH"
-
-test -d "$HOME/.local/bin"; then
-  PATH="$HOME/.local/bin:$PATH"
-
-#ignore upper and lowercase when TAB completion
-bind "set completion-ignore-case on"
-
-#list
-alias ls='ls --color=auto'
-alias la='ls -a'
-alias ll='ls -la'
-alias l='ls'
-alias l.="ls -A | egrep '^\.'"
-
-#fix obvious typo's
-alias cd..='cd ..'
-alias pdw="pwd"
+case $- in
+    *i*) ;;
+      *) return;;
+esac
 
 
-## Colorize the grep command output for ease of use (good for log files)##
-alias grep='grep --color=auto'
-alias egrep='egrep --color=auto'
-alias fgrep='fgrep --color=auto'
+#----------------------- environment variables ----------------------
+#                           (also see envx)
 
+export GITUSER="$USER"
+export DOTFILES="$HOME/repos/github.com/$GITUSER/dot"
+export GHREPOS="$HOME/repos/github.com/$GITUSER/"
 
-#readable output
-alias df='df -h'
+export TERM=xterm-256color
+export HRULEWIDTH=73
+export EDITOR=vi
+export VISUAL=vi
+export EDITOR_PREFIX=vi
 
+export PYTHONDONTWRITEBYTECODE=1
 
-#free
-alias free="free -mt"
+test -d ~/.vim/spell && export VIMSPELL=(~/.vim/spell/*.add)
 
-#use all cores
-alias uac="sh ~/.bin/main/000*"
+#export GOPRIVATE="github.com/$GITUSER/*,gitlab.com/$GITUSER/*"
+#export GOPATH=~/.local/share/go
+#export GOBIN=~/.local/bin
+#export GOPROXY=direct
+#export CGO_ENABLED=0
 
-#continue download
-alias wget="wget -c"
+#rpi pico
+export PICO_SDK_PATH=/home/tim/Documents/pico/pico/pico-sdk
+export PICO_EXAMPLES_PATH=/home/tim/Documents/pico/pico/pico-examples
+export PICO_EXTRAS_PATH=/home/tim/Documents/pico/pico/pico-extras
+export PICO_PLAYGROUND_PATH=/home/tim/Documents/pico/pico/pico-playground
+# Install Ruby Gems to ~/gems
+export GEM_HOME="$HOME/gems"
 
-#userlist
-alias userlist="cut -d: -f1 /etc/passwd"
+# ----------------------------- history -------------------------------
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
+HISTSIZE=1000
+HISTFILESIZE=2000
+set -o vi
 
-#merge new settings
-alias merge="xrdb -merge ~/.Xresources"
+# ------------------------ bash shell options ------------------------
 
-
-
-
-
-
-
-
-
-
-## Arch Specific Commands
-alias udpate='sudo pacman -Syyu'
-alias upate='sudo pacman -Syyu'
-alias updte='sudo pacman -Syyu'
-alias updqte='sudo pacman -Syyu'
-alias upqll="yay -Syu --noconfirm"
-
-#pacman unlock
-alias unlock="sudo rm /var/lib/pacman/db.lck"
-alias rmpacmanlock="sudo rm /var/lib/pacman/db.lck"
-
-#arcolinux logout unlock
-alias rmlogoutlock="sudo rm /tmp/arcologout.lock"
-
-
-# Aliases for software managment
-# pacman or pm
-alias pacman='sudo pacman --color auto'
-alias update='sudo pacman -Syyu'
-
-# yay as aur helper - updates everything
-alias pksyua="yay -Syu --noconfirm"
-alias upall="yay -Syu --noconfirm"
-
-#ps
-alias psa="ps auxf"
-alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
-
-#grub update
-alias update-grub="sudo grub-mkconfig -o /boot/grub/grub.cfg"
-
-#add new fonts
-alias update-fc='sudo fc-cache -fv'
-
-#switch between bash and zsh
-alias tobash="sudo chsh $USER -s /bin/bash && echo 'Now log out.'"
-alias tozsh="sudo chsh $USER -s /bin/zsh && echo 'Now log out.'"
-
-#quickly kill conkies
-alias kc='killall conky'
-
-#hardware info --short
-alias hw="hwinfo --short"
-
-#skip integrity check
-alias yayskip='yay -S --mflags --skipinteg'
-alias trizenskip='trizen -S --skipinteg'
-
-#check vulnerabilities microcode
-alias microcode='grep . /sys/devices/system/cpu/vulnerabilities/*'
-
-#get fastest mirrors in your neighborhood
-alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
-alias mirrord="sudo reflector --latest 50 --number 20 --sort delay --save /etc/pacman.d/mirrorlist"
-alias mirrors="sudo reflector --latest 50 --number 20 --sort score --save /etc/pacman.d/mirrorlist"
-alias mirrora="sudo reflector --latest 50 --number 20 --sort age --save /etc/pacman.d/mirrorlist"
-
-#mounting the folder Public for exchange between host and guest on virtualbox
-alias vbm="sudo /usr/local/bin/arcolinux-vbox-share"
-
-#shopt
-shopt -s autocd # change to named directory
-shopt -s cdspell # autocorrects cd misspellings
-shopt -s cmdhist # save multi-line commands in history as single line
+shopt -s checkwinsize
+#shopt -s expand_aliases
+shopt -s globstar
 shopt -s dotglob
-shopt -s histappend # do not overwrite history
-shopt -s expand_aliases # expand aliases
+shopt -s extglob
+#shopt -s nullglob # bug kills completion for some
+#set -o noclobber
+shopt -s histappend
 
-#youtube-dl
-alias yta-aac="youtube-dl --extract-audio --audio-format aac "
-alias yta-best="youtube-dl --extract-audio --audio-format best "
-alias yta-flac="youtube-dl --extract-audio --audio-format flac "
-alias yta-m4a="youtube-dl --extract-audio --audio-format m4a "
-alias yta-mp3="youtube-dl --extract-audio --audio-format mp3 "
-alias yta-opus="youtube-dl --extract-audio --audio-format opus "
-alias yta-vorbis="youtube-dl --extract-audio --audio-format vorbis "
-alias yta-wav="youtube-dl --extract-audio --audio-format wav "
+# ------------------------------- pager ------------------------------
 
-alias ytv-best="youtube-dl -f bestvideo+bestaudio "
+if test -x /usr/bin/lesspipe; then
+      export LESSOPEN="| /usr/bin/lesspipe %s";
+        export LESSCLOSE="/usr/bin/lesspipe %s %s";
+fi
 
-#Recent Installed Packages
-alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl"
-alias riplong="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -3000 | nl"
+export LESS_TERMCAP_mb="[35m" # magenta
+export LESS_TERMCAP_md="[33m" # yellow
+export LESS_TERMCAP_me="" # "0m"
+export LESS_TERMCAP_se="" # "0m"
+export LESS_TERMCAP_so="[34m" # blue
+export LESS_TERMCAP_ue="" # "0m"
+export LESS_TERMCAP_us="[4m"  # underline
 
-#iso and version used to install ArcoLinux
-alias iso="cat /etc/dev-rel | awk -F '=' '/ISO/ {print $2}'"
 
-#Cleanup orphaned packages
-alias cleanup='sudo pacman -Rns $(pacman -Qtdq)'
 
-#get the error messages from journalctl
-alias jctl="journalctl -p 3 -xb"
+# ----------------------------- dircolors ----------------------------
 
-#nano for important configuration files
-#know what you do in these files
-alias nlightdm="sudo nano /etc/lightdm/lightdm.conf"
-alias npacman="sudo nano /etc/pacman.conf"
-alias ngrub="sudo nano /etc/default/grub"
-alias nmkinitcpio="sudo nano /etc/mkinitcpio.conf"
-alias nslim="sudo nano /etc/slim.conf"
-alias noblogout="sudo nano /etc/oblogout.conf"
-alias nmirrorlist="sudo nano /etc/pacman.d/mirrorlist"
-alias nconfgrub="sudo nano /boot/grub/grub.cfg"
-alias bls="betterlockscreen -u /usr/share/backgrounds/arcolinux/"
-
-#gpg
-#verify signature for isos
-alias gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
-#receive the key of a developer
-alias gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
-
-#maintenance
-alias big="expac -H M '%m\t%n' | sort -h | nl"
-alias downgrada="sudo downgrade --ala-url https://bike.seedhost.eu/arcolinux/"
-
-#systeminfo
-alias probe="sudo -E hw-probe -all -upload"
-
-#shutdown or reboot
-alias ssn="sudo shutdown now"
-alias sr="sudo reboot"
-
-# # ex = EXtractor for all kinds of archives
-# # usage: ex <file>
-ex ()
-{
-  if [ -f $1 ] ; then
-    case $1 in
-      *.tar.bz2)   tar xjf $1   ;;
-      *.tar.gz)    tar xzf $1   ;;
-      *.bz2)       bunzip2 $1   ;;
-      *.rar)       unrar x $1   ;;
-      *.gz)        gunzip $1    ;;
-      *.tar)       tar xf $1    ;;
-      *.tbz2)      tar xjf $1   ;;
-      *.tgz)       tar xzf $1   ;;
-      *.zip)       unzip $1     ;;
-      *.Z)         uncompress $1;;
-      *.7z)        7z x $1      ;;
-      *.deb)       ar x $1      ;;
-      *.tar.xz)    tar xf $1    ;;
-      *.tar.zst)   unzstd $1    ;;
-      *)           echo "'$1' cannot be extracted via ex()" ;;
-    esac
+if which dircolors &>/dev/null; then
+  if test -r ~/.dircolors; then
+      eval "$(dircolors -b ~/.dircolors)"
   else
-    echo "'$1' is not a valid file"
+      eval "$(dircolors -b)"
+  fi
+fi
+
+
+
+
+# --------------------------- smart prompt ---------------------------
+
+PROMPT_LONG=50
+PROMPT_MAX=95
+
+__ps1() {
+  local P='$'
+
+  if test -n "${ZSH_VERSION}"; then
+    local r='%F{red}'
+    local g='%F{black}'
+    local h='%F{blue}'
+    local u='%F{yellow}'
+    local p='%F{yellow}'
+    local w='%F{magenta}'
+    local b='%F{cyan}'
+    local x='%f'
+  else
+    local r='\[\e[31m\]'
+    local g='\[\e[30m\]'
+    local h='\[\e[34m\]'
+    local u='\[\e[33m\]'
+    local p='\[\e[33m\]'
+    local w='\[\e[35m\]'
+    local b='\[\e[36m\]'
+    local x='\[\e[0m\]'
+  fi
+
+  if test "${EUID}" == 0; then
+    P='#'
+    if test -n "${ZSH_VERSION}"; then
+      u='$F{red}'
+    else
+      u=$r
+    fi
+    p=$u
+  fi
+
+  local dir;
+  if test "$PWD" = "$HOME"; then
+    dir='~'
+  else
+    dir="${PWD##*/}"
+    if test "${dir}" = _; then
+      dir=${PWD#*${PWD%/*/_}}
+      dir=${dir#/}
+    elif test "${dir}" = work; then
+      dir=${PWD#*${PWD%/*/work}}
+      dir=${dir#/}
+    fi
+  fi
+
+  local B=$(git branch --show-current 2>/dev/null)
+  test "$dir" = "$B" && B='.'
+  local countme="$USER@$(hostname):$dir($B)\$ "
+
+  test "$B" = master -o "$B" = main && b=$r
+  test -n "$B" && B="$g($b$B$g)"
+
+  if test -n "${ZSH_VERSION}"; then
+    local short="$u%n$g@$h%m$g:$w$dir$B$p$P$x "
+    local long="$g╔ $u%n$g@%m\h$g:$w$dir$B\n$g╚ $p$P$x "
+    local double="$g╔ $u%n$g@%m\h$g:$w$dir\n$g║ $B\n$g╚ $p$P$x "
+  else
+    local short="$u\u$g@$h\h$g:$w$dir$B$p$P$x "
+    local long="$g╔ $u\u$g@$h\h$g:$w$dir$B\n$g╚ $p$P$x "
+    local double="$g╔ $u\u$g@$h\h$g:$w$dir\n$g║ $B\n$g╚ $p$P$x "
+  fi
+
+  if test ${#countme} -gt "${PROMPT_MAX}"; then
+    PS1="$double"
+  elif test ${#countme} -gt "${PROMPT_LONG}"; then
+    PS1="$long"
+  else
+    PS1="$short"
   fi
 }
 
-export PATH="$HOME/bin/$:$PATH"
-export PATH="$HOME/bin/:$PATH"
-export PATH="$PATH:~/.local/bin"
-export PATH="$PATH:/home/tim/.local/bin"
+PROMPT_COMMAND="__ps1"
 
-#create a file called .bashrc-personal and put all your personal aliases
-#in there. They will not be overwritten by skel.
 
-[[ -f ~/.bashrc-personal ]] && . ~/.bashrc-personal
+#not sure
+test -n "$DISPLAY" && setxkbmap -option caps:escape &>/dev/null
 
-neofetch
+# ----------------------------- other stuff ----------------------------
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+
+# ----------------------------- aliases --------------------------------
+
+alias ll='ls -alF'
+alias python="/usr/bin/python3.8"
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+
+
+
+
+
+
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+
+
+export PATH="${HOME}/.local/bin:$PATH"
+
+
+# ----------------------------- source files --------------------------------
+
+
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
+if [ -f ~/.bashrc-personal ]; then
+	. ~/.bashrc-personal
+fi
+
+
+
+
+
+
+export PATH=$PATH:/usr/local/go/bin
+source "$HOME/.cargo/env"
+export PATH="$HOME/gems/bin:$PATH"
+export PATH="$PATH:/usr/bin/python3.8"
 

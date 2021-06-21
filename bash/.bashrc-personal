@@ -1,0 +1,134 @@
+
+
+
+#vim to neovim
+#alias vim="nvim"
+alias vi="vim"
+
+#tmux
+alias tt="vi ~/.config/tmux/.tmux.conf"
+alias tn="tmux -u new"
+alias ta="tmux -u attach"
+
+
+#git stuff
+alias ga="git add ."
+alias gc="git commit"
+alias gp="git push"
+alias gs="git status"
+
+
+#git configuration
+git config --global user.email "delltim@gmail.com"
+git config --global user.name "qwertimer"
+
+alias bashconf="vi ~/.bashrc-personal"
+alias sbash="source ~/.bashrc"
+
+alias start-masters="cd ~/Documents/Masters/2020\ Code/Production/Lightning_whale/whaleNN && ./tmux_whale.sh"
+
+alias dot="cd ~/repos/github.com/qwertimer/.dotfiles"
+alias fixweb="sudo /sbin/route add -net 0.0.0.0 gw 192.168.0.1 wlp3s0"
+
+#weather
+alias weather="curl wttr.in/Narellan+Vale"
+
+#ip checker
+#alias myip="curl ipinfo.io"   -- deprecated using an actual program now. -- Allows use in other scripts.
+
+#better ssh keygen
+alias ssh-keygen="ssh-keygen -t ed25519"
+
+
+alias ll="exa -al"
+alias ls="exa"
+
+#Commands for git setup
+havecmd () {
+  type "$1" &> /dev/null
+  return $?
+}
+
+
+havecmd git && export GITUSER="$(git config --global user.name)"
+
+#Make directory and cd into it
+mcd () {
+    mkdir -p $1
+    cd $1
+}
+
+cheat () {
+  where="$1"; shift
+  IFS=+ curl "http://cht.sh/$where/ $*"
+} && export -f cheat
+
+
+
+#From ArcoLinux
+
+#continue download
+alias wget="wget -c"
+
+# pacman or pm    
+alias pacman='sudo pacman --color auto'    
+alias update='sudo pacman -Syyu'    
+
+#mirror update
+alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
+
+# # ex = EXtractor for all kinds of archives
+# # usage: ex <file>
+ex ()
+{
+  if [ -f $1 ] ; then
+    case $1 in
+      *.tar.bz2)   tar xjf $1   ;;
+      *.tar.gz)    tar xzf $1   ;;
+      *.bz2)       bunzip2 $1   ;;
+      *.rar)       unrar x $1   ;;
+      *.gz)        gunzip $1    ;;
+      *.tar)       tar xf $1    ;;
+      *.tbz2)      tar xjf $1   ;;
+      *.tgz)       tar xzf $1   ;;
+      *.zip)       unzip $1     ;;
+      *.Z)         uncompress $1;;
+      *.7z)        7z x $1      ;;
+      *.deb)       ar x $1      ;;
+      *.tar.xz)    tar xf $1    ;;
+      *.tar.zst)   unzstd $1    ;;      
+      *)           echo "'$1' cannot be extracted via ex()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
+
+
+## For quick access
+### alias SSD= "cd /mnt/SSD/"
+export PATH="/home/tim/Documents/git_dls/rwxrob/dotfiles/common/lynx:/home/tim/miniconda3/bin:/home/tim/miniconda3/condabin:/home/tim/.local/bin:/home/tim/.local/kitty.app/bin:/home/tim/.cargo/bin:/home/tim/.local/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/usr/local/go/bin:/home/tim/.fzf/bin:/usr/local/go/bin:/home/tim/.local/scripts:$HOME/.local/bin/linux/x86_64/:~/.emacs.d/bin:$HOME/repos/github.com/qwertimer/.dotfiles/scripts"
+export PATH="$PATH:./.local/bin"
+
+#docker programs
+
+
+demacs() { 
+
+        docker run -it --rm -v "$PWD:/tmp" doom-emacs:latest $1 
+        
+ } && export -f demacs
+
+#alias ?="duck"
+#alias ??="google"
+#alias ???="bing"
+
+##The Fuck
+eval "$(thefuck --alias)"
+
+## Setup zets if needed..... 
+#ln -s ~/.local/share/todo ~/repos/github.com/qwertimer/; complete -C todo todo
+#ln -s ~/.local/share/log ~/repos/github.com/qwertimer/; complete -C log log
+export SCRIPTS='/home/tim/repos/github.com/qwertimer/.dotfiles/scripts'
+
+

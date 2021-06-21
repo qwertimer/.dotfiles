@@ -1,1 +1,0 @@
-/home/tim/.config/nvim/onedark.vim/autoload/onedark.vim

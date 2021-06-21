@@ -12,6 +12,6 @@ These scripts are a stripped down version of rwxrobs great scripts for all thing
 
 ## What's a "shortcut command"?
 
-A *shortcut command* is Rob salternative to aliases (which do not work with
+A *shortcut command* is Rob alternative to aliases (which do not work with
 subprocesses such as when using [Vim magic](https://rwx.gg/vimagic),
 

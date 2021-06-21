@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec mpv "https://www.twitch.tv/rwxrob" 2>/dev/null 2>&1

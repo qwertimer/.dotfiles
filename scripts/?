@@ -1,0 +1,9 @@
+#!/bin/sh
+
+tmux new-window -t $session:9 -n scratch
+
+tmux send -t 9 "exec lynx \
+    'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
+
+tmux select-window -t $session:9
+
