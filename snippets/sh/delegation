@@ -1,0 +1,8 @@
+
+# -------------------------------- delegation --------------------------------
+
+declare cmd="$1"; shift
+for c in "${COMMANDS[@]}"; do
+  [[ $c == "$cmd" ]] &&  "_$cmd" "$@" && exit $?
+done
+

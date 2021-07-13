@@ -291,6 +291,7 @@ myKeys =
         , ("M-b", spawn (myBrowser ))
         , ("M-M1-h", spawn (myTerminal ++ " -e htop"))
         , ("M-f", spawn (myFiles ))
+        , ("M-r", spawn (rofi -show run))
 
     -- Kill windows
         , ("M-q", kill1)     -- Kill the currently focused client

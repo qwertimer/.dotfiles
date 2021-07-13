@@ -1,8 +1,3 @@
-
-
-
-#vim to neovim
-#alias vim="nvim"
 alias vi="vim"
 
 #tmux
@@ -25,31 +20,21 @@ git config --global user.name "qwertimer"
 alias bashconf="vi ~/.bashrc-personal"
 alias sbash="source ~/.bashrc"
 
-alias start-masters="cd ~/Documents/Masters/2020\ Code/Production/Lightning_whale/whaleNN && ./tmux_whale.sh"
-
 alias dot="cd ~/repos/github.com/qwertimer/.dotfiles"
 alias fixweb="sudo /sbin/route add -net 0.0.0.0 gw 192.168.0.1 wlp3s0"
 
 #weather
 alias weather="curl wttr.in/Narellan+Vale"
 
-#ip checker
-#alias myip="curl ipinfo.io"   -- deprecated using an actual program now. -- Allows use in other scripts.
-
 #better ssh keygen
 alias ssh-keygen="ssh-keygen -t ed25519"
 
-
-alias ll="exa -al"
-alias ls="exa"
 
 #Commands for git setup
 havecmd () {
   type "$1" &> /dev/null
   return $?
 }
-
-
 havecmd git && export GITUSER="$(git config --global user.name)"
 
 #Make directory and cd into it

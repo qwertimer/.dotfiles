@@ -1,0 +1,15 @@
+# -------------------------------- completion --------------------------------
+# complete -c greet greet
+declare -a COMMANDS=(foo bar blah)
+
+if [[ -n $COMP_LINE ]]; then
+  for cmd in "${COMMANDS[@]}"; do
+    # ${cmd:0:${#2}}  <-- looks at the cmd and takes the 0 place up to the
+    # length of the command.
+   [[ ${cmd:0:${#2}} = "${2,,}" ]] && echo "$cmd"    #{2,,} <-- looks at the second command and auto lower case
+  done
+  exit
+fi
+
+# ------------------------------ end completion ------------------------------
+
