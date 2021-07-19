@@ -16,6 +16,7 @@ esac
 export USER="tim"
 export GITUSER="qwertimer"
 export DOTFILES="$HOME/repos/github.com/$GITUSER/.dotfiles"
+export TASKS="$HOME/repos/github.com/$GITUSER/tasks"
 export GHREPOS="$HOME/repos/github.com/$GITUSER/"
 export SNIPPETS="$HOME/repos/github.com/$GITUSER/.dotfiles/snippets"
 export SCRIPTS="$HOME/.local/bin/scripts"
@@ -73,15 +74,28 @@ if test -x /usr/bin/lesspipe; then
         export LESSCLOSE="/usr/bin/lesspipe %s %s";
 fi
 
-export LESS_TERMCAP_mb="[35m" # magenta
-export LESS_TERMCAP_md="[33m" # yellow
-export LESS_TERMCAP_me="" # "0m"
-export LESS_TERMCAP_se="" # "0m"
-export LESS_TERMCAP_so="[34m" # blue
-export LESS_TERMCAP_ue="" # "0m"
-export LESS_TERMCAP_us="[4m"  # underline
+#export LESS_TERMCAP_mb="[35m" # magenta
+#export LESS_TERMCAP_md="[33m" # yellow
+#export LESS_TERMCAP_me="" # "0m"
+#export LESS_TERMCAP_se="" # "0m"
+#export LESS_TERMCAP_so="[34m" # blue
+#export LESS_TERMCAP_ue="" # "0m"
+#export LESS_TERMCAP_us="[4m"  # underline
 
-
+export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
+export LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
+export LESS_TERMCAP_me=$(tput sgr0)
+export LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) # yellow on blue
+export LESS_TERMCAP_se=$(tput rmso; tput sgr0)
+export LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) # white
+export LESS_TERMCAP_ue=$(tput rmul; tput sgr0)
+export LESS_TERMCAP_mr=$(tput rev)
+export LESS_TERMCAP_mh=$(tput dim)
+export LESS_TERMCAP_ZN=$(tput ssubm)
+export LESS_TERMCAP_ZV=$(tput rsubm)
+export LESS_TERMCAP_ZO=$(tput ssupm)
+export LESS_TERMCAP_ZW=$(tput rsupm)
+export GROFF_NO_SGR=1         # For Konsole and Gnome-terminal
 
 # --------------------------------- dircolors --------------------------------
 
@@ -226,6 +240,15 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
       #/sbin \
       #/bin
 
+# ---------------------------------- CDPATH ---------------------------------
+
+export CDPATH=.:\
+~/repos/github.com:\
+~/repos/github.com/$GITUSER:\
+~/repos/github.com/$GITUSER/dot:\
+~/repos:\
+/media/$USER:\
+~
 
 
 # --------------------------------- keyboard ---------------------------------
@@ -274,6 +297,7 @@ fi
 alias python="/usr/bin/python3.8"
 alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
+alias tasks='cd $TASKS'
 
 
 alias ?='duck'
@@ -282,6 +306,14 @@ alias ???='bing'
 
 alias snippets='cd "$SNIPPETS"'
 
+alias pip="python3 -m pip"
+
+
+##to-do/ task management. These aliases are linked to a folder i have called tasks which manages my todo list. The aliases below are command shortcuts for simple 3 line scripts that change to the task folder and either create, close or view the task list. Once completed they return to the original folder.
+
+alias nt="newtask "
+alias ct="closetask "
+alias st="listtasks "
 
 
 # ------------------------- personalised completions -------------------------
@@ -290,3 +322,5 @@ alias snippets='cd "$SNIPPETS"'
 owncomp=(sshkey)
 for i in ${owncomp[@]}; do complete -C $i $i; done
 
+
+source "$DOTFILES/snippets/sh/colours"
