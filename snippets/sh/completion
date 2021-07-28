@@ -1,5 +1,7 @@
 # ------------------------------ bash completion -----------------------------
 
+##Must be placed below the functions
+
 IFS=$'\n'
 functions=()
 for f in $(declare -F); do
