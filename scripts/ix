@@ -9,4 +9,4 @@ fi
 
 url=$(curl -s -F 'f:1=<-' http://ix.io)
 which xclip >/dev/null || exit 0
-echo "$url" | xclip 
+echo "$url" >> xclip
