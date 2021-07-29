@@ -7,7 +7,9 @@ functions=()
 for f in $(declare -F); do
   functions+=( $f )
 done
-declare -a COMMANDS="${functions[@]//declare -f _}"
+func_pre=_
+
+declare -a COMMANDS="${functions[@]//declare -f $func_pre}"
 if [[ -n $COMP_LINE ]]; then
 
     for c in "${COMMANDS[@]}"; do
