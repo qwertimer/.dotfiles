@@ -13,22 +13,21 @@
 
 
 if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
-    
+
     val=`tmux lsw -F '#{window_name}#{window_active}'|sed -n 's|^\(.*\)1$|\1|p'`
     tmux has-session -t $session:9 2>/dev/null 
     if [ $? = 0 ]; then 
-        tmux send-keys -t $session:9 "q exit"
+        tmux send-keys -t $session:9 "q exit" Enter
     fi
-    tmux new-window -t $session:9
-
-    tmux send -t $session:9 "exec lynx \
-        'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
+    tmux new-window -t $session:9 
+    tmux send -t $session:9 "printf '\ec'" Enter
+    tmux send -t $session:9 "lynx 'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
     tmux select-window -t $session:9
 
     if [ $val = "vim" ]; then 
-        echo "vim is here"
         tmux send-keys -t $session:$val "C-m"
     fi
 else
-    exec lynx "https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*"
+    printf '\ec'
+    lynx "https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*"
 fi
