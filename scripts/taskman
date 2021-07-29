@@ -1,0 +1,72 @@
+#!/bin/bash
+
+
+#This script is a quick getup and going for the github integrated issue based task manager of mine. The commands that are used are simple and easy to work with and are seen in this scripts folder.
+#To work with the scripts a couple of setups are needed. We first must create the tasks folder which is located inside the repos/github directory. Once the folder is created we can initialise the repository and either git pull the current tasks repository or begin a new repository. The scripts below are setup to allow either approach. The script also gets and pulls my newtask, closetask and listtasks scripts and places them in the scripts folder.
+GHREPO="$HOME"/repos/github.com/"$USER"/
+
+
+x_initialisation() {
+  #mkdir -p "$GHREPO"/"$1"
+  #cd "$GHREPO"/"$1"
+  #git init
+  #touch README.md
+  cat << EOF
+    You will now need to run the command to add the repo to github using
+    gh repo create and follow the instructions. Once completed add the README.md file to
+    repo with git add . git commit -m "new README.md" git push -u origin master
+EOF
+
+  echo -e 'alias st="taskman listtasks"\nalias nt="taskman newtask"\nalias ct="taskman closetask"' >> ~/.bashrc
+ }
+
+
+
+x_newtask() {
+  cd ~/repos/github.com/qwertimer/tasks/
+  gh issue create -t "$*" 
+}
+
+x_closetask() {
+
+  cd ~/repos/github.com/qwertimer/tasks/
+  gh issue close "$*"
+  cd -
+}
+
+x_listtasks() {
+
+cd ~/repos/github.com/qwertimer/tasks/
+gh issue list
+cd -
+
+}
+
+# ------------------------------ bash completion -----------------------------
+
+##Must be placed below the functions
+
+IFS=$'\n'
+functions=()
+for f in $(declare -F); do
+  functions+=( $f )
+done
+func_pre=x_
+
+declare -a COMMANDS="${functions[@]//declare -f $func_pre}"
+if [[ -n $COMP_LINE ]]; then
+
+    for c in "${COMMANDS[@]}"; do
+        [[ ${c:0:${#2}} == "${2,,}" ]] && echo "$c"
+    done
+fi
+
+# ---------------------------- delegation ----------------------------
+
+declare cmd="$1"; shift
+for c in ${COMMANDS[@]}; do
+    if [[ $c == "$cmd" ]]; then
+      "x_$cmd" "$@"
+      exit $?
+    fi
+done
