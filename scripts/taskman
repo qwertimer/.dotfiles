@@ -3,8 +3,11 @@
 
 #This script is a quick getup and going for the github integrated issue based task manager of mine. The commands that are used are simple and easy to work with and are seen in this scripts folder.
 #To work with the scripts a couple of setups are needed. We first must create the tasks folder which is located inside the repos/github directory. Once the folder is created we can initialise the repository and either git pull the current tasks repository or begin a new repository. The scripts below are setup to allow either approach. The script also gets and pulls my newtask, closetask and listtasks scripts and places them in the scripts folder.
-GHREPO="$HOME"/repos/github.com/"$USER"/
+GHREPO="$HOME"/repos/github.com/"$GHUSER"/
+HELP_BROWSER=lynx
+declare -A help
 
+help[initialisation]="Initialises the repository for use with the taskman. It is up to the user to add the git repository to github using gh repo create. Following this the user must push the repo to gihub to initialise the project"
 
 x_initialisation() {
   #mkdir -p "$GHREPO"/"$1"
@@ -21,12 +24,14 @@ EOF
  }
 
 
+help[newtask]="Creates a new task using Github issues and allows the user to add in the message, The program moves to the repo and then starts a issue with gh"
 
 x_newtask() {
   cd ~/repos/github.com/qwertimer/tasks/
   gh issue create -t "$*" 
 }
 
+help[closetask]="Closes the numbered task using gh command. The program moves to the nominated folder and then requests to close the issue"
 x_closetask() {
 
   cd ~/repos/github.com/qwertimer/tasks/
@@ -34,6 +39,7 @@ x_closetask() {
   cd -
 }
 
+help[listtask]="Lists all currently open tasks at the specified folder"
 x_listtasks() {
 
 cd ~/repos/github.com/qwertimer/tasks/
@@ -42,18 +48,35 @@ cd -
 
 }
 
+
+# ---------------------------- help functionality ----------------------------
+_make_html() {
+  local name=${1:-main}
+  local title="$EXE $name"
+  [[ $name = main ]] && title="$EXE"
+  pandoc -s --metadata title="$title" \
+    -o "/tmp/$name-help.html" <<< "${help[$name]}"
+}
+
+x_help() { 
+  local name=${1:-main} 
+  local file="/tmp/$name-help.html"
+  if [[ -n "$HELP_BROWSER" ]];then
+    _make_html "$name"
+    exec "$HELP_BROWSER" "$file"
+  else
+    pandoc -s -t plain  <<< "${help[${1:-main}]}" | more
+  fi
+}
+
 # ------------------------------ bash completion -----------------------------
 
-##Must be placed below the functions
+while read -r line; do
+  [[ $line =~ ^declare\ -f\ x_ ]] || continue
+  COMMANDS+=( ${line##declare -f x_} )
+done < <(declare -F)
 
-IFS=$'\n'
-functions=()
-for f in $(declare -F); do
-  functions+=( $f )
-done
-func_pre=x_
 
-declare -a COMMANDS="${functions[@]//declare -f $func_pre}"
 if [[ -n $COMP_LINE ]]; then
 
     for c in "${COMMANDS[@]}"; do
@@ -70,3 +93,5 @@ for c in ${COMMANDS[@]}; do
       exit $?
     fi
 done
+
+

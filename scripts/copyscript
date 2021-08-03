@@ -1,0 +1,19 @@
+#!/bin/bash
+#script to copy and save to a file. Then you can call it bask whenever. This will be a shortcut and a keybinding.
+declare -a files
+cutstrings() {
+
+  file=`mktemp`
+  if [[ -s /dev/stdin ]]; then
+    while IFS=$'\n' read -r argline; do
+       ind=+$argline 
+       $ind > $file
+     done
+
+  fi
+
+}
+  
+
+
+cutstrings $@

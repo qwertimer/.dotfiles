@@ -248,7 +248,6 @@ if [[ -n $COMP_LINE ]]; then
     done
 fi
 
-
 # ---------------------------- delegation ----------------------------
 
 declare cmd="$1"; shift
