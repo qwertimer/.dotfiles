@@ -43,10 +43,10 @@ mcd () {
     cd $1
 }
 
-cheat () {
-  where="$1"; shift
-  IFS=+ curl "http://cht.sh/$where/ $*"
-} && export -f cheat
+#cheat () {
+#  where="$1"; shift
+#  IFS=+ curl "http://cht.sh/$where/ $*"
+#} && export -f cheat
 
 
 
@@ -98,11 +98,11 @@ export PATH="$PATH:./.local/bin"
 #docker programs
 
 
-demacs() { 
+#demacs() { 
 
-        docker run -it --rm -v "$PWD:/tmp" doom-emacs:latest $1 
+#        docker run -it --rm -v "$PWD:/tmp" doom-emacs:latest $1 
         
- } && export -f demacs
+# } && export -f demacs
 
 #alias ?="duck"
 #alias ??="google"

@@ -9,7 +9,13 @@ case $- in
       *) return;;
 esac
 
+# --------------------------- Start tmux on startup --------------------------
 
+# if tmux is executable and not inside a tmux session, then try to attach.
+# if attachment fails, start a new session
+[ -x "$(command -v tmux)" ] \
+  && [ -z "${TMUX}" ] \
+  && { tmux attach || tmux; } >/dev/null 2>&1
 
 # --------------------------- environment variables --------------------------
 #                           (also see envx)
@@ -44,8 +50,8 @@ export PICO_PLAYGROUND_PATH=/home/tim/Documents/pico/pico/pico-playground
 # Install Ruby Gems to ~/gems
 export GEM_HOME="$HOME/gems"
 
-
-
+source /etc/profile.d/bash_completion.sh
+alias vi=vim
 # ---------------------------------- history ---------------------------------
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -99,7 +105,7 @@ export GROFF_NO_SGR=1         # For Konsole and Gnome-terminal
 
 # --------------------------------- dircolors --------------------------------
 
-if which dircolors &>/dev/null; then
+if (command -v dircolors) &>/dev/null; then
   if test -r ~/.dircolors; then
       eval "$(dircolors -b ~/.dircolors)"
   else
@@ -228,6 +234,12 @@ export SCRIPTS=~/.local/bin/scripts
 mkdir -p "$SCRIPTS" &>/dev/null
 
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH 
+
+
+pathprepend \
+  ~/.local/bin \
+  "$SCRIPTS" 
+
 #pathappend \
       #/usr/local/opt/coreutils/libexec/gnubin \
       #/mingw64/bin \
@@ -274,9 +286,9 @@ fi
 # ------------------------------- source files -------------------------------
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-if [ -f ~/.bashrc-personal ]; then
-	. ~/.bashrc-personal
-fi
+#if [ -f ~/.bashrc-personal ]; then
+#. ~/.bashrc-personal
+#fi
 source "$HOME/.cargo/env"
 export PATH="$HOME/gems/bin:$PATH"
 
@@ -298,7 +310,8 @@ alias python="/usr/bin/python3.8"
 alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
 alias tasks='cd $TASKS'
-
+alias zets='cd ~/.local/share/zet/'
+alias whale='cd /mnt/SSD/Masters/Datasets/null'
 
 alias ?='duck'
 alias ??='google'
@@ -311,16 +324,22 @@ alias pip="python3 -m pip"
 
 ##to-do/ task management. These aliases are linked to a folder i have called tasks which manages my todo list. The aliases below are command shortcuts for simple 3 line scripts that change to the task folder and either create, close or view the task list. Once completed they return to the original folder.
 
-alias nt="newtask "
-alias ct="closetask "
-alias st="listtasks "
+#pywal mod
 
+wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
 
 # ------------------------- personalised completions -------------------------
 
+owncomp=(
+  pdf md yt gl kn auth pomo config taskman 
+  sshkey ws ./build build b ./setup zet
+)
 
-owncomp=(sshkey)
 for i in ${owncomp[@]}; do complete -C $i $i; done
 
 
+# ----------------------------------- other ----------------------------------
 source "$DOTFILES/snippets/sh/colours"
+alias st="taskman listtasks"
+alias nt="taskman newtask"
+alias ct="taskman closetask"
