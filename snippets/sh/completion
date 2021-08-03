@@ -17,3 +17,17 @@ if [[ -n $COMP_LINE ]]; then
     done
 fi
 
+
+### Robs Mods to my code
+#while read -r line; do
+#  [[ $line =~ ^declare\ -f\ _ ]] || contine
+#  COMMANDS+=( ${line##declare -f _} )
+#done < <(declare -F)
+#
+#
+#if [[ -n $COMP_LINE ]]; then
+#
+#    for c in "${COMMANDS[@]}"; do
+#        [[ ${c:0:${#2}} == "${2,,}" ]] && echo "$c"
+#    done
+#fi
