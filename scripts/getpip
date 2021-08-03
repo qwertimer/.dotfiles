@@ -1,0 +1,5 @@
+#!/bin/sh
+curl https://bootstrap.pypa.io/get-pip.py > ~/get-pip.py
+cd ~
+python3 get-pip.py >/dev/null
+echo "pip installed"

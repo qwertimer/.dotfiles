@@ -20,15 +20,10 @@ pathappend() {
 create_scripts_links() {
     
     echo "Setting Scripts variable and adding scripts to path"
-    if test -f ~/.bashrc-personal; then
-        if ! grep -q SCRIPTS ~/.bashrc-personal; then
-	    echo "SCRIPTS doesn't exist adding it now."
-	    export SCRIPTS=~/.local/bin/scripts
-    	fi
-    fi
+	  export SCRIPTS=~/.local/bin/scripts
 
-    test ! -d "$SCRIPTS" && mkdir -p "$SCRIPTS"
-    ln -sf "$PWD/scripts" "$HOME/.local/bin/scripts"
+    test ! -d "$HOME/.local/bin" && mkdir -p "$HOME/.local/bin"
+    ln -sf "$PWD/scripts" "$HOME/.local/bin/"
 
     echo "adding scripts to path"
     if test -e ~/.bashrc-personal; then
@@ -117,7 +112,7 @@ main() {
 #Create scripts directory in .local/bin and symlink the scripts folder
     echo "Start installation of dotfiles and scripts"
     #git_update
-    set_symlinks "$@"
+    #set_symlinks "$@"
     create_scripts_links 
     
     echo ""

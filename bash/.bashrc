@@ -289,7 +289,7 @@ fi
 #if [ -f ~/.bashrc-personal ]; then
 #. ~/.bashrc-personal
 #fi
-source "$HOME/.cargo/env"
+#source "$HOME/.cargo/env"
 export PATH="$HOME/gems/bin:$PATH"
 
 # -------------------------------- completion --------------------------------
