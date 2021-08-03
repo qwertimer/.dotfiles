@@ -55,84 +55,9 @@ set_symlinks() {
     DOT=$HOME/repos/github.com/qwertimer/.dotfiles
     argc="$@"
     for arg in $argc; do
-	x=$arg
+     	x=$arg
         case $x in
-	
-        -bash | bash)
-          BASH_FOLDER=$HOME 
-                echo "Adding bash to $BASH_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/bash/.bashrc" "$BASH_FOLDER/.bashrc"
-                ln -sf "$DOT/bash/.bashrc-common" "$BASH_FOLDER/.bashrc-common"
-                ln -sf "$DOT/bash/.bashrc-personal" "$BASH_FOLDER/.bashrc-personal"
-                ln -sf "$DOT/.profile" "$BASH_FOLDER/.bash_profile"     #replace with home
-            ;;
-
-        -dc | dir-col)
-          DIR_FOLDER=$HOME
-          echo "Adding dir colors to $DIR_FOLDER"
-
-          echo "-------------------"
-                ln -sf "$DOT/.dircolors" "$DIR_FOLDER/.dircolors"
-            ;;
-
-        -git | git)
-
-          GIT_FOLDER=$HOME
-          echo "Adding git templates to $GIT_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/git" "$GIT_FOLDER/"
-            ;;
-
-        -tmux | tmux)
-          TMUX_FOLDER=$HOME
-                echo "Adding TMUX to $TMUX_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/tmux/tmux/tmux.conf" "$TMUX_FOLDER/.tmux.conf"   
-
-            ;;
-        -vim | vim)
-
-          VIM_FOLDER=$HOME/.vim/
-          echo "Adding vim config to $VIM_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/vim/" "$VIM_FOLDER"   #.config/nvim"
-                ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
-
-
-            ;;
-
-        -nvim | nvim)
-          NVIM_FOLDER=$HOME/.config/
-          echo "Adding vim config to $NVIM_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/nvim/" "$NVIM_FOLDER/nvim"   #.config/nvim"
-            ;;
-
-        #Xmonad Configs
-        -xmonad | xmonad)
-          XMONAD_FOLDER=$HOME/.config/.xmonad
-          XMOBAR_FOLDER=$HOME/.config/xmobar
-                echo "Adding xmonad config to $XMONAD_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/.xmonad/" "$XMONAD_FOLDER"
-
-          echo "Adding xmobarrc to $XMOBAR_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/xmobar/xmobar" "$XMOBAR_FOLDER"
-
-            ;;
-        -zsh | zsh)
-
-	    ZSH_FOLDER=$HOME
-          echo "Adding ZSH config to $ZSH_FOLDER"
-          echo "-------------------"
-                ln -sf "$DOT/zsh/zshrc" "$ZSH_FOLDER/.zshrc"
-            ;;
-
         -all | all)
-          echo "-------------------"
-          echo "Add all"
 
           BASH_FOLDER=$HOME 
           echo "Adding bash to $BASH_FOLDER"
@@ -143,14 +68,14 @@ set_symlinks() {
           echo "$DOT/bash/bashrc"
           ln -sf "$DOT/bash/.bashrc-personal" "$BASH_FOLDER/.bashrc-personal"
           ln -sf "$DOT/bash/.bash_profile" "$BASH_FOLDER/.bash_profile"     #replace with home
-          
+
           DIR_FOLDER=$HOME
           echo "Adding dir colors to $DIR_FOLDER"
           echo "-------------------"
           ln -sf "$DOT/.dircolors" "$DIR_FOLDER/.dircolors"
 
 
-          GIT_FOLDER=$HOME
+          GIT_FOLDER=$HOME/
           echo "Adding git templates to $GIT_FOLDER"
           echo "-------------------"
           ln -sf "$DOT/git" "$GIT_FOLDER/"
@@ -158,20 +83,15 @@ set_symlinks() {
           TMUX_FOLDER=$HOME
           echo "Adding TMUX to $TMUX_FOLDER"
           echo "-------------------"
-          ln -sf "$DOT/tmux/tmux/tmux.conf" "$TMUX_FOLDER/.tmux.conf"   
+          ln -sf "$DOT/tmux/tmux/tmux-live.conf" "$TMUX_FOLDER/.tmux.conf"
 
 
           VIM_FOLDER=$HOME/.vim/
           echo "Adding vim config to $VIM_FOLDER"
           echo "-------------------"
-          ln -sf "$DOT/vim/" "$VIM_FOLDER"   
+          ln -sf "$DOT/vim/" "$VIM_FOLDER"
           ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
 
-          NVIM_FOLDER=$HOME/.config
-          echo "Adding vim config to $NVIM_FOLDER"
-          echo "-------------------"
-          ln -sf "$DOT/nvim" "$NVIM_FOLDER/nvim"   
-            
           XMONAD_FOLDER=$HOME/
           XMOBAR_FOLDER=$HOME/.config
           echo "Adding xmonad config to $XMONAD_FOLDER"
@@ -182,11 +102,6 @@ set_symlinks() {
           echo "-------------------"
           test -d "$DOT/xmobar/" || mkdir "$DOT/xmobar"
           ln -sf "$DOT/xmobar/" "$XMOBAR_FOLDER/"
-
-          ZSH_FOLDER=$HOME
-          echo "Adding ZSH config to $ZSH_FOLDER"
-          echo "-------------------"
-          ln -sf "$DOT/zsh/zshrc" "$ZSH_FOLDER/.zshrc"
 
         esac
     done
@@ -223,13 +138,5 @@ if [[ -n $COMP_LINE ]]; then
 fi
 
 # ------------------------------ end completion ------------------------------
-
-
-# -------------------------------- delegation --------------------------------
-
-declare cmd="$1"; shift
-for c in "${COMMANDS[@]}"; do
-  [[ $c == "$cmd" ]] &&  "_$cmd" "$@" && exit $?
-done
 
 main "$@"
