@@ -340,6 +340,7 @@ for i in ${owncomp[@]}; do complete -C $i $i; done
 
 # ----------------------------------- other ----------------------------------
 source "$DOTFILES/snippets/sh/colours"
+source "/home/tim/.gh_comp"
 alias st="taskman listtasks"
 alias nt="taskman newtask"
 alias ct="taskman closetask"
