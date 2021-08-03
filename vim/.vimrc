@@ -204,6 +204,8 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   "Plug 'frazrepo/vim-rainbow'
   Plug 'mhinz/vim-startify'
   Plug 'mbbill/undotree'
+
+
   call plug#end()
 
   " rainbox
@@ -265,7 +267,7 @@ autocmd vimleavepre *.md !perl -p -i -e 's,\[([^\]]+)\]\(\),[\1](https://duck.co
 " fill in anything beginning with @ with a link to twitch to it
 "autocmd vimleavepre *.md !perl -p -i -e 's, @(\w+), [\\@\1](https://twitch.tv/\1),g' %
 
-
+"au FileType python !bash echo -e "#!/usr/bin/python\n# *-* coding: utf-8 *-*\n\nif __name__ == "__main__":\n\t"
 "turn emoji :pomo: etc into actual emojis
 autocmd BufWritePost *.md !toemoji % 
 
@@ -350,11 +352,17 @@ noremap <C-n> <C-d>
 noremap <C-p> <C-b>
 
 
-" --------------------------- Tim's Configurations ---------------------------
+" --------------------------- qwertimer's Configurations ---------------------------
 
 "ab is used for autocorrect and autofill
-ab myemail delltim@gmail.com
+ab myemail qwertimer@gmail.com
 ab teh the
+
+
+let mapleader=' '
+
+"yank to xclip
+vnoremap <silent><Leader>y "yy <Bar> :call system('xclip', @y)<CR>
 
 
 " Set TMUX window name to name of file
