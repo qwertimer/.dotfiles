@@ -260,6 +260,8 @@ export CDPATH=.:\
 ~/repos/github.com/$GITUSER/dot:\
 ~/repos:\
 /media/$USER:\
+/mnt/SSD:\
+~/.local/bin:\
 ~
 
 
@@ -305,7 +307,26 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# ---------------------------------- theming ---------------------------------
+
+#theme script from https://github.com/lemnos/theme.sh stored in scripts folder
+if command -v theme > /dev/null; then
+	export THEME_HISTFILE=~/.theme_history
+	[ -e "$THEME_HISTFILE" ] && theme "$(theme -l|tail -n1)"
+
+	# Optional
+
+	bind -x '"\x0f":"theme $(theme -l|tail -n2|head -n1)"' #Binds C-o to the previously active theme.
+	alias th='theme -i'
+	alias thl='theme --light -i'
+	alias thd='theme --dark -i'
+fi
+
 # --------------------------------- aliases  ---------------------------------
+
+#Make ip have colours
+alias ip='ip -br -c'
+
 alias python="/usr/bin/python3.8"
 alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
@@ -322,7 +343,17 @@ alias snippets='cd "$SNIPPETS"'
 alias pip="python3 -m pip"
 
 
-##to-do/ task management. These aliases are linked to a folder i have called tasks which manages my todo list. The aliases below are command shortcuts for simple 3 line scripts that change to the task folder and either create, close or view the task list. Once completed they return to the original folder.
+alias st="taskman listtasks"
+alias nt="taskman newtask"
+alias ct="taskman closetask"
+alias vt="taskman viewtask"
+alias ifu="ifuse Documents/iphone"
+
+#command line keybindings
+# bind \e is alt \w is ctrl
+bind -x '"\ed":" nautilus &>/dev/null"'
+bind -x '"\ef":" firefox &>/dev/null"'
+bind -x '"\en":" vpn &>/dev/null"'
 
 #pywal mod
 
@@ -332,7 +363,7 @@ wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
 
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
-  sshkey ws ./build build b ./setup zet
+  sshkey ws ./build build b ./setup zet ix2me
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
@@ -341,6 +372,22 @@ for i in ${owncomp[@]}; do complete -C $i $i; done
 # ----------------------------------- other ----------------------------------
 source "$DOTFILES/snippets/sh/colours"
 source "/home/tim/.gh_comp"
-alias st="taskman listtasks"
-alias nt="taskman newtask"
-alias ct="taskman closetask"
+
+
+# -------------------------------- fzf configs -------------------------------
+export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
+--color=dark
+--color=fg:-1,bg:-1,hl:#5fff87,fg+:-1,bg+:-1,hl+:#ffaf5f
+--color=info:#af87ff,prompt:#5fff87,pointer:#ff87d7,marker:#ff87d7,spinner:#ff87d7
+'
+
+export FZF_DEFAULT_COMMAND="fd . $HOME"
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND="fd -t d . $HOME"
+
+
+# --------------- personal, work and environment configurations --------------
+
+if [ -f ~/.bashrc_envs ]; then
+    . ~/.bashrc_envs
+fi

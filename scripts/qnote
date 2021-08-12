@@ -1,0 +1,23 @@
+#!/bin/sh
+
+dnote(){ #: Save a note to the desktop, using a simple form of dmenu.
+	local File="$HOME/Desktop/Saved Notes.txt"
+	if ! [ -f "$File" ]; then
+		> "$File"
+	else
+		if ! [ -w "$File" ]; then
+			printf "ERROR: No write access to notes file.\n"
+			return 1
+		fi
+	fi
+
+	local NOTE=`printf '' | dmenu -p 'NOTE:' -l 1`
+	if [ -z "$NOTE" ]; then
+		printf "ERROR: Cannot save an empty note.\n"
+		return 1
+	else
+		printf "%(%F_%X)T: %s\n" -1 "$NOTE" >> "$File"
+	fi
+}
+
+dnote

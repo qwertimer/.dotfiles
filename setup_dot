@@ -78,7 +78,7 @@ set_symlinks() {
           TMUX_FOLDER=$HOME
           echo "Adding TMUX to $TMUX_FOLDER"
           echo "-------------------"
-          ln -sf "$DOT/tmux/tmux/tmux-live.conf" "$TMUX_FOLDER/.tmux.conf"
+          ln -sf "$DOT/tmux/tmux/tmux.conf" "$TMUX_FOLDER/.tmux.conf"
 
 
           VIM_FOLDER=$HOME/.vim/
@@ -112,7 +112,7 @@ main() {
 #Create scripts directory in .local/bin and symlink the scripts folder
     echo "Start installation of dotfiles and scripts"
     #git_update
-    #set_symlinks "$@"
+    set_symlinks "$@"
     create_scripts_links 
     
     echo ""

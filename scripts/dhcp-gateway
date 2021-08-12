@@ -5,9 +5,6 @@ LAN=enp6s0
 echo "Starting DHCP server for $LAN, sharing connection $WLAN..."
 sudo systemctl start dnsmasq.service
 echo "Adding allow rules to firewall..."
-sudo ufw allow in on $LAN to any port 53 proto udp comment "dhcp server (dnsmasq) on $LAN"
-sudo ufw allow in on $LAN to any port 67 proto udp comment "dhcp server (dnsmasq) on $LAN"
-sudo ufw allow in on $LAN to any port 3142 proto udp comment "apt cache server on $LAN"
 sudo ufw route allow in on $LAN out on $WLAN comment "dhcp gateway routing"
 echo "Adding IP routes..."
 echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward > /dev/null

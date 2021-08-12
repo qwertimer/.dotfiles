@@ -3,7 +3,7 @@
 
 #This script is a quick getup and going for the github integrated issue based task manager of mine. The commands that are used are simple and easy to work with and are seen in this scripts folder.
 #To work with the scripts a couple of setups are needed. We first must create the tasks folder which is located inside the repos/github directory. Once the folder is created we can initialise the repository and either git pull the current tasks repository or begin a new repository. The scripts below are setup to allow either approach. The script also gets and pulls my newtask, closetask and listtasks scripts and places them in the scripts folder.
-: GHUSER="qwertimer"
+GHUSER="qwertimer"
 GHREPO="$HOME"/repos/github.com/"$GHUSER"
 tasks="$GHREPO/tasks"
 HELP_BROWSER=lynx
