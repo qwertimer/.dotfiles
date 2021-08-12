@@ -11,7 +11,7 @@ use v5.14;
 $_ = shift;
 if (not $_) {
     my $gh = (grep {/github/ && s,git@,, && s,:,/, && s/\.git$//}
-             qx{git remote get-url --all origin})[0];
+             qx{git remote get-url --all master})[0];
     $gh and exec 'firefox', '-new-window', "https://$gh";
 }
 -r $_ && exec 'xdg-open', $_;
