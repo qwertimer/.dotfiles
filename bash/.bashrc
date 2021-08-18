@@ -13,25 +13,52 @@ esac
 
 # if tmux is executable and not inside a tmux session, then try to attach.
 # if attachment fails, start a new session
-[ -x "$(command -v tmux)" ] \
-  && [ -z "${TMUX}" ] \
-  && { tmux attach || tmux; } >/dev/null 2>&1
+#[ -x "$(command -v tmux)" ] \
+#  && [ -z "${TMUX}" ] \
+#  && { tmux attach || tmux; } >/dev/null 2>&1
 
 # --------------------------- environment variables --------------------------
 #                           (also see envx)
+
+
+# Folders
 export USER="tim"
 export GITUSER="qwertimer"
-export DOTFILES="$HOME/repos/github.com/$GITUSER/.dotfiles"
-export TASKS="$HOME/repos/github.com/$GITUSER/tasks"
-export GHREPOS="$HOME/repos/github.com/$GITUSER/"
-export SNIPPETS="$HOME/repos/github.com/$GITUSER/.dotfiles/snippets"
+export DESKTOP="$HOME/Desktop"
+export DOCUMENTS="$HOME/Documents"
+export DOWNLOADS="$HOME/Downloads"
+export PICTURES="$HOME/Pictures"
+export MUSIC="$HOME/Music"
+export VIDEOS="$HOME/Videos"
+export GHREPOS="$HOME/repos/github.com/$GITUSER"
+export DOTFILES="$GHREPOS/.dotfiles"
+#export ZETDIR="$GHREPOS/zet"
+export SNIPPETS="$DOTFILES/snippets"
+export TASKS="$DOTFILES/tasks"
 export SCRIPTS="$HOME/.local/bin/scripts"
+export PDFS="$DOCUMENTS/PDFS"
+export WORKSPACES="$HOME/Workspaces" # container home dirs for mounting
+
+## rwxrob clip program..... 
+export CLIP_DIR="$VIDEOS/Clips"
+export CLIP_DATA="$GHREPOS/cmd-clip/data"
+export CLIP_VOLUME=0
+
+# terminal stuff
 export TERM=xterm-256color
 export HRULEWIDTH=80
+
+# Editors
 export EDITOR=vim
 export VISUAL=vim
 export EDITOR_PREFIX=vim
 
+#browser defaults
+export HELP_BROWSER=lynx
+
+
+
+# ------------------------ programmming env variables ------------------------
 export PYTHONDONTWRITEBYTECODE=1
 
 test -d ~/.vim/spell && export VIMSPELL=(~/.vim/spell/*.add)
@@ -49,6 +76,7 @@ export PICO_EXTRAS_PATH=/home/tim/Documents/pico/pico/pico-extras
 export PICO_PLAYGROUND_PATH=/home/tim/Documents/pico/pico/pico-playground
 # Install Ruby Gems to ~/gems
 export GEM_HOME="$HOME/gems"
+
 
 source /etc/profile.d/bash_completion.sh
 alias vi=vim
@@ -238,19 +266,20 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 pathprepend \
   ~/.local/bin \
-  "$SCRIPTS" 
+  "$SCRIPTS" \
+  ~/.poetry/bin
 
-#pathappend \
-      #/usr/local/opt/coreutils/libexec/gnubin \
-      #/mingw64/bin \
-      #/usr/local/bin \
-      #/usr/local/sbin \
-      #/usr/games \
-      #/usr/sbin \
-      #/usr/bin \
-      #/snap/bin \
-      #/sbin \
-      #/bin
+pathappend \
+      /usr/local/opt/coreutils/libexec/gnubin \
+      /mingw64/bin \
+      /usr/local/bin \
+      /usr/local/sbin \
+      /usr/games \
+      /usr/sbin \
+      /usr/bin \
+      /snap/bin \
+      /sbin \
+      /bin
 
 # ---------------------------------- CDPATH ---------------------------------
 
@@ -351,14 +380,13 @@ alias ifu="ifuse Documents/iphone"
 
 #command line keybindings
 # bind \e is alt \w is ctrl
-bind -x '"\ed":" nautilus &>/dev/null"'
-bind -x '"\ef":" firefox &>/dev/null"'
+bind -x '"\ed":"nautilus &>/dev/null"'
+bind -x '"\ef":"firefox &>/dev/null"'
 bind -x '"\en":" vpn &>/dev/null"'
-
+bind -x '"\eb":". ~/.bashrc"'
 #pywal mod
 
 wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
-
 # ------------------------- personalised completions -------------------------
 
 owncomp=(
