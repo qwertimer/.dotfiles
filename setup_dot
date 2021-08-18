@@ -47,7 +47,8 @@ set_symlinks() {
 
     # Create symlinks.
     echo "Creating Symlinks"
-    DOT=$HOME/repos/github.com/qwertimer/.dotfiles
+    #DOT=$HOME/repos/github.com/qwertimer/.dotfiles
+    DOT=$PWD
     argc="$@"
     for arg in $argc; do
      	x=$arg
