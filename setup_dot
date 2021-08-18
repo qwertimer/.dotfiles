@@ -82,6 +82,7 @@ set_symlinks() {
 
 
           VIM_FOLDER=$HOME/.vim/
+          mkdir ~/.vim
           echo "Adding vim config to $VIM_FOLDER"
           echo "-------------------"
           ln -sf "$DOT/vim/" "$VIM_FOLDER"
@@ -89,6 +90,7 @@ set_symlinks() {
 
           XMONAD_FOLDER=$HOME/
           XMOBAR_FOLDER=$HOME/.config
+          mkdir ~/.config
           echo "Adding xmonad config to $XMONAD_FOLDER"
           echo "-------------------"
           ln -sf "$DOT/.xmonad/" "$XMONAD_FOLDER"
