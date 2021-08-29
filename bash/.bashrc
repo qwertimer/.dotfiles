@@ -38,7 +38,6 @@ export TASKS="$DOTFILES/tasks"
 export SCRIPTS="$HOME/.local/bin/scripts"
 export PDFS="$DOCUMENTS/PDFS"
 export WORKSPACES="$HOME/Workspaces" # container home dirs for mounting
-
 ## rwxrob clip program..... 
 export CLIP_DIR="$VIDEOS/Clips"
 export CLIP_DATA="$GHREPOS/cmd-clip/data"
