@@ -1,7 +1,7 @@
 #!/bin/bash
 declare -a array
 declare -a SPLITS 
-SNIPS="$HOME/repos/github.com/qwertimer/.dotfiles/snippets"
+SNIPS="$HOME/repos/github.com/qwertimer/.dotfiles/snippets/"
 #test=grep -r -l '.*' "$SNIPS/"
 
 readarray -d '' array < <(find "$SNIPS" -print0)

@@ -3,10 +3,10 @@
 
 #This script is a quick getup and going for the github integrated issue based task manager of mine. The commands that are used are simple and easy to work with and are seen in this scripts folder.
 #To work with the scripts a couple of setups are needed. We first must create the tasks folder which is located inside the repos/github directory. Once the folder is created we can initialise the repository and either git pull the current tasks repository or begin a new repository. The scripts below are setup to allow either approach. The script also gets and pulls my newtask, closetask and listtasks scripts and places them in the scripts folder.
-GHUSER="qwertimer"
-GHREPO="$HOME"/repos/github.com/"$GHUSER"
-tasks="$GHREPO/tasks"
-HELP_BROWSER=lynx
+: "${GHUSER:=qwertimer}"
+: "${GHREPO:=$HOME"/repos/github.com/"$GHUSER}"
+: "${tasks:=github.com/qwertimer/tasks}"
+: "${HELP_BROWSER:=lynx}"
 declare -A help
 
 help[initialisation]="Initialises the repository for use with the taskman. It is up to the user to add the git repository to github using gh repo create. Following this the user must push the repo to gihub to initialise the project. If you wish to add shortcuts alasesuncomment the last line."
@@ -30,33 +30,26 @@ EOF
 help[newtask]="Creates a new task using Github issues and allows the user to add in the message, The program moves to the repo and then starts a issue with gh"
 
 x_newtask() {
-  cd $tasks 
-  gh issue create -t "$*" 
-  cd -
+
+  gh issue create -R "$tasks" -t "$*" 
 }
 
 help[closetask]="Closes the numbered task using gh command. The program moves to the nominated folder and then requests to close the issue"
 x_closetask() {
 
-  cd $tasks 
-  gh issue close "$*"
-  cd -
+  gh issue close -R "$tasks" "$*"
 }
 
 help[listtask]="Lists all currently open tasks at the specified folder"
 x_listtasks() {
 
-cd $tasks
-gh issue list
-cd -
+gh issue list -R "$tasks"
 
 }
 
 help[viewtask]="Will show the issue that you requested. with viewtask #Number"
 x_viewtask() {
-  cd $tasks
-  gh issue view "$*"
-  cd -
+  gh issue view -R "$tasks" "$*"
 }
 
 

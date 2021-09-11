@@ -1,2 +1,2 @@
 #!/bin/sh
-nordvpn connect ukraine
+exec nordvpn connect ${1:-ukraine}

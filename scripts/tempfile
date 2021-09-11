@@ -1,0 +1,9 @@
+#!/bin/sh
+
+file=`mktemp`
+while IFS='\n' read -r line; do
+    echo $line >> $file
+done < "${1:-/dev/stdin}"
+
+echo done
+exec vim "$file"

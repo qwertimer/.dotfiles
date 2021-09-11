@@ -101,30 +101,6 @@ x_usage() {
     printf "usage: %s (%s)\n" "${0##*/}" "${cmds// /|}"
 }
 
-help[record]='
-The `record` command combines video and audio recording with the
-creation of a new zettel repo. The zettel it creates includes reminders
-to start recording and about the preferred content order for such
-videos.  '
-
-x_record() {
-    local topic
-    if type iam &>/dev/null; then
-        topic="$(topic)"
-        type iam &>/dev/null && iam recording "$*"
-    fi
-    local zetid=$(x_isosec)
-    mkdir "/tmp/$zetid"
-    echo -e "# $*\n\n*remember to start recording*\n\n1. Scenario\n2. Solution\n3. Steps\n4. Summary\n" > "/tmp/$zetid/README.md"
-    local zetid
-    zetid=$(x_import "/tmp/$zetid")
-    (( $? == 0 )) && rm -rf "$zetid"
-    x_edit "$zetid"
-    if [[ -n "$topic" ]]; then
-        t "$topic"
-    fi
-    echo "Don't forget to stop recording."
-}
 
 help[import]='
 The `import` command copies an exactly duplicate of the directory passed
@@ -378,21 +354,26 @@ x_a() { x_add "$@"; }
 x_edit() {
   local dir zetid
   if [[ $1 =~ ^[0-9]{14,}$ ]]; then
-    dir="$(x_d)/$1"
+    zetid="$1"
+    dir="$(x_dir)/$1"
   elif [[ $1 = last ]]; then
-    dir="$(x_d)/$(x_last)"
+      zetid="$(x_last)"
+    dir="$(x_dir)/$zetid"
   else
     zetid=$(yt zet "$1")
     if [[ -z "$zetid" ]]; then
       echo "Unable to determine zet id for $1"
       return 1
     fi
-    dir="$(x_d)/$zetid"
+    dir="$(x_dir)/$zetid"
   fi
   local readme="$dir/README.md"
-  [[ ! -r $readme ]] && echo "Not found." && return 1
+  [[ ! -r "$readme" ]] && echo "Not found." && return 1
   "${EDITOR:-vim}" "$readme"
+  read -r -p "Commit? " resp
+  [[ $resp =~ ^[yY] ]] && x_commit "$zetid"
 }
+
 x_e() { x_edit "$@"; }
 
 x_titles() {

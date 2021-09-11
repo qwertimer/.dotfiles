@@ -22,35 +22,37 @@ Then add complete -C foo foo (or something like it) to your bashrc.
 Begin functions with x_ to allow useful command names to be used that
 would otherwise conflict with existing system and bash keywords.
 '
-# ------------------------------ filter Example ------------------------------
+
+: ${venvdir:="$HOME/pythonvenvs"}
 x_initialisevenv() {
   cd $HOME/
-  mkdir $HOME/pythonvenvs
-  curl "https://bootstrap.pypa.io/virtualenv.pyz" > "$HOME/pythonvenvs/virtualenv.pyz"
+  mkdir "$venvdir"
+  curl "https://bootstrap.pypa.io/virtualenv.pyz" > "$venvdir/virtualenv.pyz"
 }
 
 x_start() {
-  echo
   #TODO: If $1 is in list then run
+  cd $venvdir/$1/bin/
+
+  . ./activate
   
-  source "~/pythonvenvs/$1/bin/activate"
 }
 
 x_stop() {
- :
+  deactivate
 }
 
 x_new() {
   name=$1; shift
   if [ -n "$name" ]; then  
-    python3 "$HOME"/pythonvenvs/virtualenv.pyz "$HOME"/pythonvenvs/"$name" "$@"
+    python3 "$venvdir"/virtualenv.pyz "$venvdir"/"$name" "$@"
   fi
   
 }
 
 x_list() {
 
-find ~/pythonvenvs/ -mindepth 1 -maxdepth 1 -type d
+find "$venvdir"/ -mindepth 1 -maxdepth 1 -type d
 }
 
 
