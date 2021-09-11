@@ -60,7 +60,7 @@ x_symlinks() {
 # ----------------------------- xmonad and xmobar ----------------------------
           XMOBAR_FOLDER=$HOME/.config
           test -d ~/.config || mkdir ~/.config
-          ln -sf "$DOT/xmonad" "$HOME/.xmonad"
+          ln -sf "$DOT/xmonad" "$XMOBAR_FOLDER/"
           ln -sf "$DOT/xmobar" "$XMOBAR_FOLDER/"
 # ------------------------------ x system utils ------------------------------
           ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
