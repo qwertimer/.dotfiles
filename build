@@ -1,0 +1,106 @@
+#!/bin/bash
+
+
+# This setup script takes all the rc files stored in this .dotfiles and symlinks them to their correct location in the system. Further to this it appends the scripts folder which is aliased to ~/.local/bin/scripts to path. By doing this we are able to make use of all the scripts developed by rwxrob and can use scripts such as newx to create our own scripts which are automatically added to this location. 
+
+set -e 
+
+
+x__pathappend() {
+  for ARG in "$@"; do
+    test -d "${ARG}" || continue
+    case ":${PATH}:" in
+    *:${ARG}:*) continue ;;
+    esac
+    export PATH="${PATH:+"${PATH}:"}${ARG}"
+    echo "$PATH"
+  done
+}
+
+x_scriptslink() {
+    
+    echo "Setting Scripts variable and adding scripts to path"
+	  export SCRIPTS=~/.local/bin/scripts
+
+    test ! -d "$HOME/.local/bin" && mkdir -p "$HOME/.local/bin"
+    ln -sf "$PWD/scripts" "$HOME/.local/bin/"
+
+    echo "adding scripts to path"
+    if test -e ~/.bashrc-personal; then
+        echo "bashrc found"
+        x__pathappend \
+            "$SCRIPTS/"
+    fi
+}
+
+
+x_symlinks() {
+
+    # Create symlinks.
+    echo "Creating Symlinks"
+    #DOT=$HOME/repos/github.com/qwertimer/.dotfiles
+    DOT=$PWD
+# ----------------------------------- bash -----------------------------------
+          ln -sf "$DOT/bash/.bashrc" "$HOME/.bashrc"
+          ln -sf "$DOT/bash/.bashrc-common" "$HOME/.bashrc-common"
+          ln -sf "$DOT/bash/.bashrc-personal" "$HOME/.bashrc-personal"
+          ln -sf "$DOT/bash/.bash_profile" "$HOME/.bash_profile"     #replace with home
+# --------------------------------- dircolors --------------------------------
+          ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
+# ------------------------------------ git -----------------------------------
+          ln -sf "$DOT/git" "$HOME/git"
+# ----------------------------------- tmux -----------------------------------
+          ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
+
+# ------------------------------------ vim -----------------------------------
+          VIM_FOLDER=$HOME/.vim/
+          test -d ~/.vim || mkdir ~/.vim
+          ln -sf "$DOT/vim/" "$VIM_FOLDER"
+          ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
+# ----------------------------- xmonad and xmobar ----------------------------
+          XMOBAR_FOLDER=$HOME/.config
+          test -d ~/.config || mkdir ~/.config
+          ln -sf "$DOT/xmonad" "$XMOBAR_FOLDER/"
+          ln -sf "$DOT/xmobar" "$XMOBAR_FOLDER/"
+# ------------------------------ x system utils ------------------------------
+          ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
+          ln -sf "$DOT/x/.Xresources" "$HOME/.Xresources"
+}
+
+x_usage() {
+    local cmds="${COMMANDS[*]}"
+    printf "usage: %s (%s)\n" "${0##*/}" "${cmds// /|}"
+}
+
+
+
+# --------------------- completion and delegation --------------------
+while IFS= read -r line; do
+    [[ $line =~ ^declare\ -f\ x_ ]] || continue
+    COMMANDS+=( "${line##declare -f x_}" )
+done < <(declare -F)
+
+if [[ -n $COMP_LINE ]]; then
+    line=${COMP_LINE#* }
+    for c in "${COMMANDS[@]}"; do
+        [[ ${c:0:${#line}} == "${line,,}" ]] && echo "$c"
+    done
+    exit
+fi
+
+for c in "${COMMANDS[@]}"; do
+    if [[ $c == "$EXE" ]]; then
+        "x_$EXE" "$@"
+        exit $?
+    fi
+done
+
+declare cmd="$1"; shift
+for c in "${COMMANDS[@]}"; do
+    if [[ $c == "$cmd" ]]; then
+        "x_$cmd" "$@"
+        exit $?
+    fi
+done
+
+x_usage "$@"

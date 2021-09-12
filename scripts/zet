@@ -4,13 +4,13 @@ set -e
 
 : "${GITUSER:=qwertimer}"
 : "${GITBRANCH:=master}"
-: "${ZETDIR:=$HOME/.local/share/}"
+: "${ZETDIR:=$HOME/.local/share}"
 
 [[ -n "$KN" ]] && ZETDIR="$KN"
-
 EXE=${0##*/}
 [[ -z "$EXE" ]] && echo "Could not determine name of executable." && exit 1
 DIR="$ZETDIR/$EXE"
+echo $DIR
 
 
 
@@ -137,52 +137,6 @@ x_delete() {
     cd -
 }
 
-help[each]='
-
-**Not yet implemented.**
-
-The `each` command reads the arguments as a template for a command to be
-passed to the command line. The syntax of the template uses Go templates
-(as popularized by Kubernetes). The following values can be wrapped in
-double curly brackets to be replaced before being called. If a value is
-empty the word `null` will be replaced. By default, all markdown is
-converted into text with the pandoc command:
-
-|Value|Description|
-|-|-|
-`{{.ID}}`|isosec identifier
-`{{.Title}}`|full (converted) text of title
-`{{.Body}}`|all text (converted) but title and video
-`{{.Slug}}`|dashed slug derived from title
-`{{.Video}}`|full video URL (usually https://youtu.be/...)
-`{{.File.Dir}}`|full path to the zettel directory
-`{{.File.README}}`|full path to the README.md file
-`{{.File.Data}}`|full path to the data.yaml file (even if not exists)
-`{{.Web.Dir}}`|curl-able URL to the zettel directory
-`{{.Web.README}}`|curl-able URL to raw README.md file
-`{{.Web.Data}}`|curl-able URL to raw data.yaml file
-`{{.Data.*}}`|reference to data from the parsed data.yaml file
-`{{.Raw.Title}}`|raw markdown of title (including initial #)
-`{{.Raw.Body}}`|raw markdown of body
-`{{.Raw.README}}`|raw markdown entire README.md file
-`{{.Raw.Data}}`|raw YAML from data.yaml file
-
-The order is always sorted by isosec meaning that the newest will
-always be last.
-'
-
-x_each() {
-  if [[ $# == 0 ]];then
-    x_each "echo"
-    return 0
-  fi
-  local dir
-  dir=$(x_d)
-  for i in $(x_ids); do
-    "$@" "$dir/$i/README.md"
-  done
-}
-
 help[grep]='
 The `grep` command simply a shortcut for `zet each grep "$@"` running
 the system grep on all the main zettel README.md files passing the
@@ -243,81 +197,11 @@ x_commit() {
 
 }
 
-x_video() {
-  _filter "$@"
 
-  # accept zet or yt ids  
-  local zetid ytid changed
-  if [[ $1 =~ ^[0-9]{14,}$ ]]; then
-    zetid="$1"
-    ytid="${2##*/}"
-  elif [[ $1 = last ]]; then
-    zetid=$(x_last)
-    ytid="${2##*/}"
-  else
-    ytid="${1##*/}"
-    zetid=$(yt zet "$1")
-  fi
-
-  # if no zet, bail
-  local dir readme
-  dir="$(x_d)/$zetid"
-  readme="$dir/README.md"
-  [[ ! -r $readme ]] && echo "<not found: $zetid/$ytid>" && return 1
-
-  # if zet has vid line...
-  if [[ $(sed '3q;d' "$readme") =~ ^📺\ \<https://youtu.be/(.*)\> ]]; then
-
-    # update if ytid 
-    if [[ -n "$ytid" ]]; then
-      echo -e "3c\n📺 <https://youtu.be/$ytid>\n.\nwq" | ed "$readme" >/dev/null
-      changed=1
-
-    # read it to print later
-    else
-      ytid=${BASH_REMATCH[1]}
-    fi
-
-  # zet does not have vid line
-  else
-
-    # so add it if have video id
-    if [[ -n "$ytid" ]]; then
-      echo -e "2a\n📺 <https://youtu.be/$ytid>\n\n.\nwq" | ed "$readme" >/dev/null
-      changed=1
-    fi
-  fi
-
-  # always print the url to the video id
-  if [[ -n "$ytid" ]]; then
-    echo "https://youtu.be/$ytid"
-    [[ $changed = 1 ]] && x_commit "$zetid"
-  else
-    echo "<no video found in $zetid>"
-  fi
-}
-x_v() { x_video "$@"; }
-
-x_urlencode() {
-  _filter "$@"
-  local string="$*"
-  local strlen=${#string}
-  local encoded=""
-  local pos c o
-  for ((pos = 0; pos < strlen; pos++)); do
-    c=${string:$pos:1}
-    case "$c" in
-    [-_.~a-zA-Z0-9]) o="${c}" ;;
-    *) printf -v o '%%%02x' "'$c'" ;;
-    esac
-    encoded+="${o}"
-  done
-  echo "${encoded}"
-}
 
 x_isosec() { date -u +%Y%m%d%H%M%S; }
 
-x_dir() { [[ -d $DIR ]] && echo "$DIR"; }
+x_dir() { echo $DIR && [[ -d "$DIR" ]] && echo "$DIR"; }
 x_d() { x_dir; }
 
 help[add]='
@@ -334,6 +218,7 @@ help[a]='The `a` command is a short form of `add`.'
 x_add() {
   local title="$*"
   local dir readme
+  echo $(x_d)
   dir="$(x_d)/$(x_isosec)"
   readme="$dir/README.md"
   mkdir -p "$dir"
