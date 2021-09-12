@@ -56,6 +56,8 @@ export EDITOR_PREFIX=vim
 #browser defaults
 export HELP_BROWSER=lynx
 
+#grep
+#export GREP_OPTIONS=' — color=auto'
 
 
 # ------------------------ programmming env variables ------------------------
@@ -195,21 +197,28 @@ __ps1() {
     fi
   fi
 
+  if test -n "$VIRTUAL_ENV"; then
+    venv="${VIRTUAL_ENV##*/}"
+  else
+    venv=""
+  fi
+  test -n "$venv" && venv="$b($b$venv$b)"
+
   local B=$(git branch --show-current 2>/dev/null)
   test "$dir" = "$B" && B='.'
-  local countme="$USER@$(hostname):$dir($B)\$ "
+  local countme="$USER@$(hostname):$v$dir($B)\$ "
 
   test "$B" = master -o "$B" = main && b=$r
-  test -n "$B" && B="$g($b$B$g)"
+  test -n "$B" && B="$b($b$B$b)"
 
   if test -n "${ZSH_VERSION}"; then
-    local short="$u%n$g@$h%m$g:$w$dir$B$p$P$x "
-    local long="$g╔ $u%n$g@%m\h$g:$w$dir$B\n$g╚ $p$P$x "
-    local double="$g╔ $u%n$g@%m\h$g:$w$dir\n$g║ $B\n$g╚ $p$P$x "
+    local short="$u%n$g@$h%m$g:$venv$w$dir$B$p$P$x "
+    local long="$g╔ $u%n$g@%m\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
+    local double="$g╔ $u%n$g@%m\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
   else
-    local short="$u\u$g@$h\h$g:$w$dir$B$p$P$x "
-    local long="$g╔ $u\u$g@$h\h$g:$w$dir$B\n$g╚ $p$P$x "
-    local double="$g╔ $u\u$g@$h\h$g:$w$dir\n$g║ $B\n$g╚ $p$P$x "
+    local short="$u\u$g@$h\h$g:$venv$w$dir$B$p$P$x "
+    local long="$g╔ $u\u$g@$h\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
+    local double="$g╔ $u\u$g@$h\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
   fi
 
   if test ${#countme} -gt "${PROMPT_MAX}"; then
@@ -309,9 +318,9 @@ if [ -x /usr/bin/dircolors ]; then
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
 
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
+    #alias grep='grep --color=auto'
+    #alias fgrep='fgrep --color=auto'
+    #alias egrep='egrep --color=auto'
 fi
 
 # ------------------------------- source files -------------------------------
@@ -392,6 +401,7 @@ wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
+  venvwrap n
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done

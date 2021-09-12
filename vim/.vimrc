@@ -132,55 +132,57 @@ syntax enable
 " faster scrolling
 set ttyfast
 
+
 " allow sensing the filetype
+" Can be used with ftplugin folder
 filetype plugin on
 
 " high contrast for streaming, etc.
-set background=dark
+"set background=dark
 
 " base default color changes (gruvbox dark friendly)
-hi StatusLine ctermfg=black ctermbg=NONE
-hi StatusLineNC ctermfg=black ctermbg=NONE
-hi Normal ctermbg=NONE
-hi Special ctermfg=cyan
-hi LineNr ctermfg=black ctermbg=NONE
-hi SpecialKey ctermfg=black ctermbg=NONE
-hi ModeMsg ctermfg=black cterm=NONE ctermbg=NONE
-hi MoreMsg ctermfg=black ctermbg=NONE
-hi NonText ctermfg=black ctermbg=NONE
-hi vimGlobal ctermfg=black ctermbg=NONE
-hi ErrorMsg ctermbg=234 ctermfg=darkred cterm=NONE
-hi Error ctermbg=234 ctermfg=darkred cterm=NONE
-hi SpellBad ctermbg=234 ctermfg=darkred cterm=NONE
-hi SpellRare ctermbg=234 ctermfg=darkred cterm=NONE
-hi Search ctermbg=236 ctermfg=darkred
-hi vimTodo ctermbg=236 ctermfg=darkred
-hi Todo ctermbg=236 ctermfg=darkred
-hi IncSearch ctermbg=236 cterm=NONE ctermfg=darkred
-hi MatchParen ctermbg=236 ctermfg=darkred
-
-" color overrides
-au FileType * hi StatusLine ctermfg=black ctermbg=NONE
-au FileType * hi StatusLineNC ctermfg=black ctermbg=NONE
-au FileType * hi Normal ctermbg=NONE
-au FileType * hi Special ctermfg=cyan
-au FileType * hi LineNr ctermfg=black ctermbg=NONE
-au FileType * hi SpecialKey ctermfg=black ctermbg=NONE
-au FileType * hi ModeMsg ctermfg=black cterm=NONE ctermbg=NONE
-au FileType * hi MoreMsg ctermfg=black ctermbg=NONE
-au FileType * hi NonText ctermfg=black ctermbg=NONE
-au FileType * hi vimGlobal ctermfg=black ctermbg=NONE
-au FileType * hi ErrorMsg ctermbg=234 ctermfg=darkred cterm=NONE
-au FileType * hi Error ctermbg=234 ctermfg=darkred cterm=NONE
-au FileType * hi SpellBad ctermbg=234 ctermfg=darkred cterm=NONE
-au FileType * hi SpellRare ctermbg=234 ctermfg=darkred cterm=NONE
-au FileType * hi Search ctermbg=236 ctermfg=darkred
-au FileType * hi vimTodo ctermbg=236 ctermfg=darkred
-au FileType * hi Todo ctermbg=236 ctermfg=darkred
-au FileType * hi IncSearch ctermbg=236 cterm=NONE ctermfg=darkred
-au FileType * hi MatchParen ctermbg=236 ctermfg=darkred
-au FileType markdown,pandoc hi Title ctermfg=yellow ctermbg=NONE
-au FileType markdown,pandoc hi Operator ctermfg=yellow ctermbg=NONE
+"hi StatusLine ctermfg=black ctermbg=NONE
+"hi StatusLineNC ctermfg=black ctermbg=NONE
+"hi Normal ctermbg=NONE
+"hi Special ctermfg=cyan
+"hi LineNr ctermfg=black ctermbg=NONE
+"hi SpecialKey ctermfg=black ctermbg=NONE
+"hi ModeMsg ctermfg=black cterm=NONE ctermbg=NONE
+"hi MoreMsg ctermfg=black ctermbg=NONE
+"hi NonText ctermfg=black ctermbg=NONE
+"hi vimGlobal ctermfg=black ctermbg=NONE
+"hi ErrorMsg ctermbg=234 ctermfg=darkred cterm=NONE
+"hi Error ctermbg=234 ctermfg=darkred cterm=NONE
+"hi SpellBad ctermbg=234 ctermfg=darkred cterm=NONE
+"hi SpellRare ctermbg=234 ctermfg=darkred cterm=NONE
+"hi Search ctermbg=236 ctermfg=darkred
+"hi vimTodo ctermbg=236 ctermfg=darkred
+"hi Todo ctermbg=236 ctermfg=darkred
+"hi IncSearch ctermbg=236 cterm=NONE ctermfg=darkred
+"hi MatchParen ctermbg=236 ctermfg=darkred
+"
+"" color overrides
+"au FileType * hi StatusLine ctermfg=black ctermbg=NONE
+"au FileType * hi StatusLineNC ctermfg=black ctermbg=NONE
+"au FileType * hi Normal ctermbg=NONE
+"au FileType * hi Special ctermfg=cyan
+"au FileType * hi LineNr ctermfg=black ctermbg=NONE
+"au FileType * hi SpecialKey ctermfg=black ctermbg=NONE
+"au FileType * hi ModeMsg ctermfg=black cterm=NONE ctermbg=NONE
+"au FileType * hi MoreMsg ctermfg=black ctermbg=NONE
+"au FileType * hi NonText ctermfg=black ctermbg=NONE
+"au FileType * hi vimGlobal ctermfg=black ctermbg=NONE
+"au FileType * hi ErrorMsg ctermbg=234 ctermfg=darkred cterm=NONE
+"au FileType * hi Error ctermbg=234 ctermfg=darkred cterm=NONE
+"au FileType * hi SpellBad ctermbg=234 ctermfg=darkred cterm=NONE
+"au FileType * hi SpellRare ctermbg=234 ctermfg=darkred cterm=NONE
+"au FileType * hi Search ctermbg=236 ctermfg=darkred
+"au FileType * hi vimTodo ctermbg=236 ctermfg=darkred
+"au FileType * hi Todo ctermbg=236 ctermfg=darkred
+"au FileType * hi IncSearch ctermbg=236 cterm=NONE ctermfg=darkred
+"au FileType * hi MatchParen ctermbg=236 ctermfg=darkred
+"au FileType markdown,pandoc hi Title ctermfg=yellow ctermbg=NONE
+"au FileType markdown,pandoc hi Operator ctermfg=yellow ctermbg=NONE
 
 " Edit/Reload vimr configuration file
 nnoremap confe :e $HOME/.vimrc<CR>
@@ -188,6 +190,7 @@ nnoremap confr :source $HOME/.vimrc<CR>
 
 set ruf=%30(%=%#LineNr#%.50F\ [%{strlen(&ft)?&ft:'none'}]\ %l:%c\ %p%%%)
 
+let g:pymode_python = 'python3'
 
 fun Plugsetup()
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
@@ -209,7 +212,10 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   "Plug 'frazrepo/vim-rainbow'
   Plug 'mhinz/vim-startify'
   Plug 'mbbill/undotree'
-
+  Plug 'joshdick/onedark.vim'
+  Plug 'KeitaNakamura/neodark.vim'
+  Plug 'jpalardy/vim-slime', { 'for': 'python' }
+  Plug 'hanschen/vim-ipython-cell', { 'for': 'python' }
 
   call plug#end()
 
@@ -244,12 +250,15 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   "let g:go_metalinter_autosave=1
   set updatetime=100
   "let g:go_gopls_analyses = { 'composites' : v:false }
-  au FileType go nmap <leader>t :GoTest!<CR>
-  au FileType go nmap <leader>v :GoVet!<CR>
-  au FileType go nmap <leader>b :GoBuild!<CR>
-  au FileType go nmap <leader>c :GoCoverageToggle<CR>
-  au FileType go nmap <leader>i :GoInfo<CR>
-  au FileType go nmap <leader>l :GoMetaLinter!<CR>
+  augroup go
+    autocmd!
+    au FileType go nmap <leader>t :GoTest!<CR>
+    au FileType go nmap <leader>v :GoVet!<CR>
+    au FileType go nmap <leader>b :GoBuild!<CR>
+    au FileType go nmap <leader>c :GoCoverageToggle<CR>
+    au FileType go nmap <leader>i :GoInfo<CR>
+    au FileType go nmap <leader>l :GoMetaLinter!<CR>
+  augroup END
   
   "Python highlighting
   let g:python_highlight_all = 1
@@ -257,7 +266,69 @@ else
   autocmd vimleavepre *.go !gofmt -w % " backup if fatih fails
 endif
 
-colorscheme gruvbox
+colorscheme neodark
+"let g:neodark#background = '#202020'
+let g:neodark#terminal_transparent = 1 " default: 0
+let g:neodark#use_256color = 1 " default: 0
+highlight Normal guibg=black guifg=white
+set background=dark
+hi Normal ctermbg=None
+
+"Configuration to try and play with ipython in vim
+augroup python
+  autocmd!
+  let g:slime_target = "tmux" 
+  au FileType py let g:slime_python_ipython = 1
+  
+  " always send text to the top-right pane in the current tmux tab
+  " without asking
+  au FileType py let g:slime_default_config = {
+               \ 'socket_name': get(split($TMUX, ','), 0),
+               \ 'target_pane': '{top-right}' }
+  au FileType py let g:slime_dont_ask_default = 1
+  "
+  "------------------------------------------------------------------------------
+  " ipython-cell configuration
+  "------------------------------------------------------------------------------
+  " Keyboard mappings. <Leader> is
+  "\ (backslash) by default
+  
+  " map <Leader>s to start IPython
+  au FileType py nnoremap <Leader>s :SlimeSend1 ipython --matplotlib<CR>
+  " map <Leader>r to run script
+  au FileType py nnoremap <Leader>r :IPythonCellRun<CR>
+  " map <Leader>R to run script and time the execution
+  au FileType py nnoremap <Leader>R :IPythonCellRunTime<CR>
+  " map <Leader>c to execute the current cell
+  au FileType py nnoremap <Leader>c :IPythonCellExecuteCell<CR>
+  " map <Leader>C to execute the current cell and jump to the next cell
+  au FileType py nnoremap <Leader>C :IPythonCellExecuteCellJump<CR>
+  " map <Leader>l to clear IPython screen
+  au FileType py nnoremap <Leader>l :IPythonCellClear<CR>
+  " map <Leader>x to close all Matplotlib figure windows
+  au FileType py nnoremap <Leader>x :IPythonCellClose<CR>
+  " map [c and ]c to jump to the previous and next cell header
+  au FileType py nnoremap [c :IPythonCellPrevCell<CR>
+  au FileType py nnoremap ]c :IPythonCellNextCell<CR>
+  " map <Leader>h to send the current line or current selection to IPython
+  au FileType py nmap <Leader>h <Plug>SlimeLineSend
+  au FileType py xmap <Leader>h <Plug>SlimeRegionSend
+  " map <Leader>p to run the previous command
+  au FileType py nnoremap <Leader>p :IPythonCellPrevCommand<CR>
+  " map <Leader>Q to restart ipython
+  au FileType py nnoremap <Leader>Q :IPythonCellRestart<CR>
+  " map <Leader>d to start debug mode
+  au FileType py nnoremap <Leader>d :SlimeSend1 %debug<CR>
+  " map <Leader>q to exit debug mode or IPython
+  au FileType py nnoremap <Leader>q :SlimeSend1 exit<CR>
+  " map <F9> and <F10> to insert a cell header tag above/below and enter insert mode
+  au FileType py nmap <F9> :IPythonCellInsertAbove<CR>a
+  au FileType py nmap <F10> :IPythonCellInsertBelow<CR>a
+  " also make <F9> and <F10> work in insert mode
+  au FileType py imap <F9> <C-o>:IPythonCellInsertAbove<CR>
+  au FileType py imap <F10> <C-o>:IPythonCellInsertBelow<CR>
+  "
+augroup END
 
 
 "UndoTree mapping to F5 for multi tree undo and redo
