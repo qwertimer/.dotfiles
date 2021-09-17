@@ -49,6 +49,7 @@ x_symlinks() {
           ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
 # ------------------------------------ git -----------------------------------
           ln -sf "$DOT/git" "$HOME/git"
+          ln -sf "$DOT/gh/.gh_comp" "$HOME/"
 # ----------------------------------- tmux -----------------------------------
           ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
 
