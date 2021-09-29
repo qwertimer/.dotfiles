@@ -1,4 +1,4 @@
-" designed for vim 8+
+ 
 " (see https://rwx.gg/vi for help)
 let skip_defaults_vim=1
 set nocompatible
@@ -437,6 +437,7 @@ ab teh the
 
 let mapleader=' '
 
+nmap <leader>n : <C-6>
 "yank to xclip
 vnoremap <silent><Leader>y "yy <Bar> :call system('xclip', @y)<CR>
 
@@ -448,4 +449,15 @@ vnoremap <silent><Leader>y "yy <Bar> :call system('xclip', @y)<CR>
 set rtp^=~/.vimpersonal
 set rtp^=~/.vimprivate
 set rtp^=~/.vimwork
+
+
+" map ppp paste command to leader p
+nmap <leader>p !!ppp<CR>
+
+" map paste from last tempfile to leader l
+nmap <leader>l :r `lasty`<CR>
+
+
+
+
 
