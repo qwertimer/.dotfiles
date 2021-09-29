@@ -184,6 +184,10 @@ filetype plugin on
 "au FileType markdown,pandoc hi Title ctermfg=yellow ctermbg=NONE
 "au FileType markdown,pandoc hi Operator ctermfg=yellow ctermbg=NONE
 
+
+let mapleader=' '
+
+
 " Edit/Reload vimr configuration file
 nnoremap confe :e $HOME/.vimrc<CR>
 nnoremap confr :source $HOME/.vimrc<CR>
@@ -215,7 +219,7 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'joshdick/onedark.vim'
   Plug 'KeitaNakamura/neodark.vim'
   Plug 'jpalardy/vim-slime', { 'for': 'python' }
-  Plug 'hanschen/vim-ipython-cell', { 'for': 'python' }
+  "Plug 'hanschen/vim-ipython-cell', { 'for': 'python' }
 
   call plug#end()
 
@@ -270,78 +274,22 @@ colorscheme neodark
 "let g:neodark#background = '#202020'
 let g:neodark#terminal_transparent = 1 " default: 0
 let g:neodark#use_256color = 1 " default: 0
+
 highlight Normal guibg=black guifg=white
 set background=dark
 hi Normal ctermbg=None
 
-"Configuration to try and play with ipython in vim
-augroup python
-  autocmd!
-  let g:slime_target = "tmux" 
-  au FileType py let g:slime_python_ipython = 1
-  
-  " always send text to the top-right pane in the current tmux tab
-  " without asking
-  au FileType py let g:slime_default_config = {
-               \ 'socket_name': get(split($TMUX, ','), 0),
-               \ 'target_pane': '{top-right}' }
-  au FileType py let g:slime_dont_ask_default = 1
-  "
-  "------------------------------------------------------------------------------
-  " ipython-cell configuration
-  "------------------------------------------------------------------------------
-  " Keyboard mappings. <Leader> is
-  "\ (backslash) by default
-  
-  " map <Leader>s to start IPython
-  au FileType py nnoremap <Leader>s :SlimeSend1 ipython --matplotlib<CR>
-  " map <Leader>r to run script
-  au FileType py nnoremap <Leader>r :IPythonCellRun<CR>
-  " map <Leader>R to run script and time the execution
-  au FileType py nnoremap <Leader>R :IPythonCellRunTime<CR>
-  " map <Leader>c to execute the current cell
-  au FileType py nnoremap <Leader>c :IPythonCellExecuteCell<CR>
-  " map <Leader>C to execute the current cell and jump to the next cell
-  au FileType py nnoremap <Leader>C :IPythonCellExecuteCellJump<CR>
-  " map <Leader>l to clear IPython screen
-  au FileType py nnoremap <Leader>l :IPythonCellClear<CR>
-  " map <Leader>x to close all Matplotlib figure windows
-  au FileType py nnoremap <Leader>x :IPythonCellClose<CR>
-  " map [c and ]c to jump to the previous and next cell header
-  au FileType py nnoremap [c :IPythonCellPrevCell<CR>
-  au FileType py nnoremap ]c :IPythonCellNextCell<CR>
-  " map <Leader>h to send the current line or current selection to IPython
-  au FileType py nmap <Leader>h <Plug>SlimeLineSend
-  au FileType py xmap <Leader>h <Plug>SlimeRegionSend
-  " map <Leader>p to run the previous command
-  au FileType py nnoremap <Leader>p :IPythonCellPrevCommand<CR>
-  " map <Leader>Q to restart ipython
-  au FileType py nnoremap <Leader>Q :IPythonCellRestart<CR>
-  " map <Leader>d to start debug mode
-  au FileType py nnoremap <Leader>d :SlimeSend1 %debug<CR>
-  " map <Leader>q to exit debug mode or IPython
-  au FileType py nnoremap <Leader>q :SlimeSend1 exit<CR>
-  " map <F9> and <F10> to insert a cell header tag above/below and enter insert mode
-  au FileType py nmap <F9> :IPythonCellInsertAbove<CR>a
-  au FileType py nmap <F10> :IPythonCellInsertBelow<CR>a
-  " also make <F9> and <F10> work in insert mode
-  au FileType py imap <F9> <C-o>:IPythonCellInsertAbove<CR>
-  au FileType py imap <F10> <C-o>:IPythonCellInsertBelow<CR>
-  "
-augroup END
-
 
 "UndoTree mapping to F5 for multi tree undo and redo
-nnoremap <F5> :UndotreeToggle<CR>
+"nnoremap <F5> :UndotreeToggle<CR>
+"
+"
 "autocmd vimleavepre *.md !perl -p -i -e 's,(?<!\[)my `(\w+)` (package|module|repo|command|utility),[my `\1` \2](https://gitlab.com/rwxrob/\1),g' %
 
 " fill in empty markdown links with duck.com search
 " [some thing]() -> [some thing](https://duck.com/lite?kae=t&q=some thing)
 " s,/foo,/bar,g
 autocmd vimleavepre *.md !perl -p -i -e 's,\[([^\]]+)\]\(\),[\1](https://duck.com/lite?kd=-1&kp=-1&q=\1),g' %
-
-" fill in anything beginning with @ with a link to twitch to it
-"autocmd vimleavepre *.md !perl -p -i -e 's, @(\w+), [\\@\1](https://twitch.tv/\1),g' %
 
 "au FileType python !bash echo -e "#!/usr/bin/python\n# *-* coding: utf-8 *-*\n\nif __name__ == "__main__":\n\t"
 "turn emoji :pomo: etc into actual emojis
@@ -396,6 +344,32 @@ endfunc
 
 " start at last place you were editing
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Helper functions
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Returns true if paste mode is enabled
+function! HasPaste()
+    if &paste
+        return 'PASTE MODE  '
+    endif
+    return ''
+endfunction
+
+""""""""""""""""""""""""""""""
+" => Status line
+""""""""""""""""""""""""""""""
+" Always show the status line
+set laststatus=2
+
+" Format the status line
+set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l\ \ Column:\ %c
+
+
+
+
+
 "au BufWritePost ~/.vimrc so ~/.vimrc
 
 " functions keys
@@ -403,11 +377,68 @@ map <F1> :set number!<CR> :set relativenumber!<CR>
 nmap <F2> :call <SID>SynStack()<CR>
 set pastetoggle=<F3>
 map <F4> :set list!<CR>
+
+
+"=================================================================================
+"
+"   Following command and mappings are mapped to run the currently open code.
+"   The default mapping is set to F5 like most code editors.
+"   Change it as you feel comfortable with, keeping in mind that it does not
+"   clash with any other keymapping.
+"
+"   NOTE: Compilers for different systems may differ. For example, in the case
+"   of C and C++, we have assumed it to be gcc and g++ respectively, but it may
+"   not be the same. It is suggested to check first if the compilers are installed
+"   before running the code, or maybe even switch to a different compiler.
+"
+"   NOTE: Adding support for more programming languages
+"
+"   Just add another elseif block before the 'endif' statement in the same
+"   way it is done in each case. Take care to add tabbed spaces after each
+"   elseif block (similar to python). For example:
+"
+"   elseif &filetype == '<your_file_extension>'
+"       exec '!<your_compiler> %'
+"
+"   NOTE: The '%' sign indicates the name of the currently open file with extension.
+"         The time command displays the time taken for execution. Remove the
+"         time command if you dont want the system to display the time
+"
+"=================================================================================
+map <F5> :call CompileRun()<CR>
+imap <F5> <Esc>:call CompileRun()<CR>
+vmap <F5> <Esc>:call CompileRun()<CR>
+
+func! CompileRun()
+exec "w"
+if &filetype == 'c'
+    exec "!gcc % -o %<"
+    exec "!time ./%<"
+elseif &filetype == 'cpp'
+    exec "!g++ % -o %<"
+    exec "!time ./%<"
+elseif &filetype == 'java'
+    exec "!javac %"
+    exec "!time java %"
+elseif &filetype == 'sh'
+    exec "!time bash %"
+elseif &filetype == 'python'
+    exec "!time python3 %"
+elseif &filetype == 'html'
+    exec "!google-chrome % &"
+elseif &filetype == 'go'
+    exec "!go build %<"
+    exec "!time go run %"
+elseif &filetype == 'matlab'
+    exec "!time octave %"
+endif
+endfunc
+
+
 map <F6> :set cursorline!<CR>
 map <F7> :set spell!<CR>
 map <F12> :set fdm=indent<CR>
 
-nmap <leader>2 :set paste<CR>
 
 " disable arrow keys (vi muscle memory)
 noremap <up> :echoerr "Umm, use k instead"<CR>
@@ -435,7 +466,6 @@ ab myemail qwertimer@gmail.com
 ab teh the
 
 
-let mapleader=' '
 
 nmap <leader>n : <C-6>
 "yank to xclip
@@ -457,6 +487,35 @@ nmap <leader>p !!ppp<CR>
 " map paste from last tempfile to leader l
 nmap <leader>l :r `lasty`<CR>
 
+
+" Quickly open a buffer for scribble
+nmap <leader>q :e ~/buffer<CR>
+
+" Quickly open a markdown buffer for scribble
+nmap <leader>x :e ~/buffer.md<CR>
+
+
+""""""""""""""""""""""""""""""
+" => Python mappings
+""""""""""""""""""""""""""""""
+
+au FileType python inoremap <buffer> $r return 
+au FileType python inoremap <buffer> $i import 
+au FileType python inoremap <buffer> $p print 
+au FileType python inoremap <buffer> $f # --- <esc>a
+au FileType python map <buffer> <leader>1 /class 
+au FileType python map <buffer> <leader>2 /def 
+au FileType python map <buffer> <leader>C ?class 
+au FileType python map <buffer> <leader>D ?def 
+
+
+
+""""""""""""""""""""""""""""
+" Set secondary leader
+""""""""""""""""""""""""""""
+
+
+let mapleader='\'
 
 
 
