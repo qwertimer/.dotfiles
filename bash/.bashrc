@@ -182,6 +182,17 @@ __ps1() {
     p=$u
   fi
 
+  local DOCKER=/.dockerenv
+  
+  
+  #Docker in PS1
+
+  if test -f "$DOCKER"; then
+    docker="(docker)"
+    d=$r$docker
+  fi
+
+  #Current Directory in PS1
   local dir;
   if test "$PWD" = "$HOME"; then
     dir='~'
@@ -195,7 +206,8 @@ __ps1() {
       dir=${dir#/}
     fi
   fi
-
+  
+  #Virtual env in PS1
   if test -n "$VIRTUAL_ENV"; then
     venv="${VIRTUAL_ENV##*/}"
   else
@@ -203,21 +215,26 @@ __ps1() {
   fi
   test -n "$venv" && venv="$b($b$venv$b)"
 
+  #Git branch in PS1
   local B=$(git branch --show-current 2>/dev/null)
   test "$dir" = "$B" && B='.'
+
+
   local countme="$USER@$(hostname):$v$dir($B)\$ "
 
   test "$B" = master -o "$B" = main && b=$r
   test -n "$B" && B="$b($b$B$b)"
 
+
+  #Display PS1
   if test -n "${ZSH_VERSION}"; then
-    local short="$u%n$g@$h%m$g:$venv$w$dir$B$p$P$x "
-    local long="$g╔ $u%n$g@%m\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
-    local double="$g╔ $u%n$g@%m\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
+    local short="$d$u%n$g@$h%m$g:$venv$w$dir$B$p$P$x "
+    local long="$d$g╔ $u%n$g@%m\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
+    local double="$d$g╔ $u%n$g@%m\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
   else
-    local short="$u\u$g@$h\h$g:$venv$w$dir$B$p$P$x "
-    local long="$g╔ $u\u$g@$h\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
-    local double="$g╔ $u\u$g@$h\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
+    local short="$d$u\u$g@$h\h$g:$venv$w$dir$B$p$P$x "
+    local long="$d$g╔ $u\u$g@$h\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
+    local double="$d$g╔ $u\u$g@$h\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
   fi
 
   if test ${#countme} -gt "${PROMPT_MAX}"; then
