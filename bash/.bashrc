@@ -143,103 +143,72 @@ if (command -v dircolors) &>/dev/null; then
 fi  
   
 
+# --------------------------- smart prompt ---------------------------
 
-# ------------------------------- smart prompt -------------------------------
-
-PROMPT_LONG=50
+PROMPT_LONG=20
 PROMPT_MAX=95
+PROMPT_AT=@
 
 __ps1() {
-  local P='$'
 
-  if test -n "${ZSH_VERSION}"; then
-    local r='%F{red}'
-    local g='%F{black}'
-    local h='%F{blue}'
-    local u='%F{yellow}'
-    local p='%F{yellow}'
-    local w='%F{magenta}'
-    local b='%F{cyan}'
-    local x='%f'
-  else
-    local r='\[\e[31m\]'
-    local g='\[\e[30m\]'
-    local h='\[\e[34m\]'
-    local u='\[\e[33m\]'
-    local p='\[\e[33m\]'
-    local w='\[\e[35m\]'
-    local b='\[\e[36m\]'
-    local x='\[\e[0m\]'
-  fi
 
-  if test "${EUID}" == 0; then
-    P='#'
-    if test -n "${ZSH_VERSION}"; then
-      u='$F{red}'
-    else
-      u=$r
-    fi
-    p=$u
-  fi
+
 
   local DOCKER=/.dockerenv
+  local P='$' dir="${PWD##*/}" B countme short long double\
+    r='\[\e[31m\]' g='\[\e[30m\]' b='\[\e[34m\]' \
+    y='\[\e[33m\]' p='\[\e[35m\]' w='\[\e[37m\]' \
+    c='\[\e[36m\]' x='\[\e[0m\]'  gr='\[\e[32m\]' 
+
+  #Check for root
+  [[ $EUID == 0 ]] && P='#' && y=$r && p=$y # root
+
+  #If dir is root then show /
+  [[ $PWD = / ]] && dir=/
+
+  #if dir is home show ~
+  [[ $PWD = "$HOME" ]] && dir='~'
   
-  
-  #Docker in PS1
+  #git branch in PS1
+  B=$(git branch --show-current 2>/dev/null)
+  [[ $dir = "$B" ]] && B=.
+
+  #Check if in docker container PS1
 
   if test -f "$DOCKER"; then
-    docker="(docker)"
-    d=$r$docker
+    docker="<docker>"
   fi
 
-  #Current Directory in PS1
-  local dir;
-  if test "$PWD" = "$HOME"; then
-    dir='~'
-  else
-    dir="${PWD##*/}"
-    if test "${dir}" = _; then
-      dir=${PWD#*${PWD%/*/_}}
-      dir=${dir#/}
-    elif test "${dir}" = work; then
-      dir=${PWD#*${PWD%/*/work}}
-      dir=${dir#/}
-    fi
-  fi
-  
-  #Virtual env in PS1
+  #Check if in venv PS1
   if test -n "$VIRTUAL_ENV"; then
     venv="${VIRTUAL_ENV##*/}"
   else
     venv=""
   fi
-  test -n "$venv" && venv="$b($b$venv$b)"
 
-  #Git branch in PS1
-  local B=$(git branch --show-current 2>/dev/null)
-  test "$dir" = "$B" && B='.'
+  countme="$doc$venv$USER$PROMPT_AT$(hostname):$dir($B)\$ "
 
-
-  local countme="$USER@$(hostname):$v$dir($B)\$ "
-
-  test "$B" = master -o "$B" = main && b=$r
-  test -n "$B" && B="$b($b$B$b)"
+  [[ $B = master || $B = main ]] && b="$r"
+  
 
 
-  #Display PS1
-  if test -n "${ZSH_VERSION}"; then
-    local short="$d$u%n$g@$h%m$g:$venv$w$dir$B$p$P$x "
-    local long="$d$g╔ $u%n$g@%m\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
-    local double="$d$g╔ $u%n$g@%m\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
-  else
-    local short="$d$u\u$g@$h\h$g:$venv$w$dir$B$p$P$x "
-    local long="$d$g╔ $u\u$g@$h\h$g:$venv$w$dir$B\n$g╚ $p$P$x "
-    local double="$d$g╔ $u\u$g@$h\h$g:$venv$w$dir\n$g║ $B\n$g╚ $p$P$x "
-  fi
+  test -n "$venv" && venv="$c($c$venv$c)"
+  [[ -n "$B" ]] && B="$gr($c$B$gr)"
+  doc=$gr$docker
+  AT="$b$PROMPT_AT"
+  dir="$w$dir"
+  long_t="$gr╔ "
+  double_pl="$gr║ "
+  long_b="$gr╚ "
+  sym="$p$P"
 
-  if test ${#countme} -gt "${PROMPT_MAX}"; then
+  short="$y\u$doc$venv$AT$h\h$g:$dir$B$sym$x "
+  long="$long_t$y\u$doc$venv$AT$h\h$g:$dir$B\n$long_b$sym$x "
+  double="$long_t$y\u$doc$venv$AT$h\h$g:$dir\n$double_pl$B\n$long_b$p$P$x "
+
+  if (( ${#countme} > PROMPT_MAX )); then
     PS1="$double"
-  elif test ${#countme} -gt "${PROMPT_LONG}"; then
+  elif (( ${#countme} > PROMPT_LONG )); then
     PS1="$long"
   else
     PS1="$short"
@@ -247,8 +216,6 @@ __ps1() {
 }
 
 PROMPT_COMMAND="__ps1"
-
-
 # ------------------------- Path add/remove functions ------------------------
 
 pathappend() {
