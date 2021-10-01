@@ -9,6 +9,10 @@ case $- in
       *) return;;
 esac
 
+# ----------------------------- utility functions ----------------------------
+_have()      { type "$1" &>/dev/null; }
+_source_if() { [[ -r "$1" ]] && source "$1"; }
+
 # --------------------------- Start tmux on startup --------------------------
 
 # if tmux is executable and not inside a tmux session, then try to attach.
@@ -109,13 +113,6 @@ if test -x /usr/bin/lesspipe; then
         export LESSCLOSE="/usr/bin/lesspipe %s %s";
 fi
 
-#export LESS_TERMCAP_mb="[35m" # magenta
-#export LESS_TERMCAP_md="[33m" # yellow
-#export LESS_TERMCAP_me="" # "0m"
-#export LESS_TERMCAP_se="" # "0m"
-#export LESS_TERMCAP_so="[34m" # blue
-#export LESS_TERMCAP_ue="" # "0m"
-#export LESS_TERMCAP_us="[4m"  # underline
 
 export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
 export LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
@@ -348,35 +345,39 @@ fi
 #Make ip have colours
 alias ip='ip -br -c'
 
-alias python="/usr/bin/python3.8"
+#locations
 alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
 alias tasks='cd $TASKS'
 alias zets='cd ~/.local/share/zet/'
 alias whale='cd /mnt/SSD/Masters/Datasets/null'
+alias snippets='cd "$SNIPPETS"'
 
+#lynx search
 alias ?='duck'
 alias ??='google'
 alias ???='bing'
 
-alias snippets='cd "$SNIPPETS"'
+#default python
+alias python="/usr/bin/python3.8"
 
+#better pip
 alias pip="python3 -m pip"
 
-
+#personal program shortcuts
 alias st="taskman listtasks"
 alias nt="taskman newtask"
 alias ct="taskman closetask"
 alias vt="taskman viewtask"
 alias ifu="ifuse Documents/iphone"
 
-#command line keybindings
-# bind \e is alt \w is ctrl
-bind -x '"\ed":"nautilus &>/dev/null"'
-bind -x '"\ef":"firefox &>/dev/null"'
-bind -x '"\en":" vpn &>/dev/null"'
-bind -x '"\eb":". ~/.bashrc"'
-#pywal mod
+
+alias view="vi -R"
+alias sshh='sshpass -f $HOME/.sshpass ssh '
+
+
+#source bash
+alias sb=". ~/.bashrc"
 
 wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
 # ------------------------- personalised completions -------------------------
@@ -412,3 +413,17 @@ export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 if [ -f ~/.bashrc_envs ]; then
     . ~/.bashrc_envs
 fi
+
+
+# ---------------------------- Program completions ---------------------------
+
+_have gh && . <(gh completion -s bash)
+_have pandoc && . <(pandoc --bash-completion)
+_have kubectl && . <(kubectl completion bash)
+_have k && complete -o default -F __start_kubectl k
+_have kind && . <(kind completion bash)
+_have yq && . <(yq shell-completion bash)
+_have helm && . <(helm completion bash)
+_have minikube && . <(minikube completion bash)
+_have mk && complete -o default -F __start_minikube mk
+_have docker && _source_if "$HOME/.local/share/docker/completion" # d
