@@ -1,0 +1,15 @@
+#!/bin/bash
+
+
+install() {
+  python3 -m pip install ansible
+}
+
+
+getpip() {
+  curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py 
+  python3 /tmp/get-pip.py
+}
+
+command -v pip || getpip
+install

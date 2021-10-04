@@ -1,2 +1,8 @@
-sudo apt install curl vim tmux lynx rofi
+# Base program installation for all computers.
+
+#Install ansible if not installed
+source ./get_ansible
+
+#Run system install
+ansible-playbook --ask-become-pass ./playbooks/install.yml
 

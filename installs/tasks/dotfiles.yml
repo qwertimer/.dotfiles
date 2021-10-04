@@ -1,0 +1,23 @@
+- name: Cloning .dotfiles
+  ansible.builtin.git:
+    repo: 'git@github.com:qwertimer/.dotfiles.git'
+    dest: "{{ lookup('env', 'HOME') }}repos/github.com/qwertimer/.dotfiles"
+    recursive: yes
+    update: yes
+    accept_hostkey: yes
+    version: master
+  tags:
+    - install
+    - dotfiles
+- name: add dotfiles
+  shell: cd $HOME/repos/github.com/qwertimer/.dotfiles && ./build symlinks
+  tags:
+    - install
+    - dotfiles
+
+
+- name: add scripts folder
+  shell: cd $HOME/repos/github.com/qwertimer/.dotfiles && ./build symlinks
+  tags:
+    - install
+    - dotfiles

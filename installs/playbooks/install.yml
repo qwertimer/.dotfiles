@@ -1,0 +1,16 @@
+
+- hosts: localhost
+  #become: true
+  become: yes 
+  become_method: enable
+  pre_tasks:
+    - name: Update cache
+      ansible.builtin.package:
+        update_cache: true
+      tags:
+        - update
+  tasks:
+    - include: tasks/base.yml
+    - include: tasks/brave.yml
+    - include: tasks/dotfiles.yml
+    - include: tasks/python.yml
