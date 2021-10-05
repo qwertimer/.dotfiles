@@ -393,7 +393,6 @@ for i in ${owncomp[@]}; do complete -C $i $i; done
 
 # ----------------------------------- other ----------------------------------
 source "$DOTFILES/snippets/sh/colours"
-source "$HOME/.gh_comp"
 
 
 # -------------------------------- fzf configs -------------------------------
@@ -427,3 +426,6 @@ _have helm && . <(helm completion bash)
 _have minikube && . <(minikube completion bash)
 _have mk && complete -o default -F __start_minikube mk
 _have docker && _source_if "$HOME/.local/share/docker/completion" # d
+_have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
+_have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
+

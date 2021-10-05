@@ -16,23 +16,18 @@ super + d
 super + f
   firefox
 
+super + n
+  rofi -show ssh
+
 super + r
   ~/bin/scripts/rofi-beats
 
-super + @space
-  rofi -show run
-
-#super + @space
-#  dmenu_run
-
 super + s
-  rofi -show ssh
+  spotify
+
 
 #super + q
 #  pkill -USR1 -x sxhkd
-
-
-
 
 #
 # Lock the screen
@@ -46,6 +41,12 @@ super + l
 #Modify to launch rwx lynx
 super + alt + l
     st -e lynx -cfg=~/.lynx/lynx.cfg -lss=~/.lynx/lynx.lss -vikeys gopher://distro.tube
+
+super + @space
+  rofi -show run
+
+#super + @space
+#  dmenu_run
 
 
 ## Requires wmctrl
