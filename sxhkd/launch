@@ -24,10 +24,11 @@ command -v wmctrl || exit
 if wmctrl -m | grep "GNOME"; then
   export TERMINAL="gnome-terminal"
 	export FILE_MANAGER="nautilus"
-  $APP_NAME -c "$HOME/.config/$APP_NAME/base_config" "$HOME/.config/$APP_NAME/gnome_config" & disown
+  printf "Starting $APP_NAME"
+  $APP_NAME -c "$HOME/.config/$APP_NAME/base_config" "$HOME/.config/$APP_NAME/gnome_config" & 
 
 elif wmctrl -m | grep "xmonad"; then
-  $APP_NAME -c "$HOME/.config/$APP_NAME/base_config" "$HOME/.config/$APP_NAME/xmonad_config" & disown
+  $APP_NAME -c "$HOME/.config/$APP_NAME/base_config" "$HOME/.config/$APP_NAME/xmonad_config" &
 fi
 
 
