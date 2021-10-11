@@ -31,7 +31,7 @@ help[newtask]="Creates a new task using Github issues and allows the user to add
 
 x_newtask() {
 
-  gh issue create -R "$tasks" -t "$*" 
+  gh issue create -R "$tasks" -t "$*" | dmenu -p
 }
 
 help[closetask]="Closes the numbered task using gh command. The program moves to the nominated folder and then requests to close the issue"

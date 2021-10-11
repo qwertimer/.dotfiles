@@ -1,8 +1,0 @@
-#!/bin/sh
-# Developed by Qwertimer
-
-#Simple program to get the latest pip installer and install it on the system
-curl https://bootstrap.pypa.io/get-pip.py > ~/get-pip.py
-cd ~
-python3 get-pip.py >/dev/null
-echo "pip installed"

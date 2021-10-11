@@ -1,4 +1,6 @@
 #!/bin/bash
+
+#Developed by qwertimer - taken from the web
 builtins(){ #: Display a columnized list of bash builtins.
 	while read -r; do
 		printf "%s\n" "${REPLY/* }"

@@ -1,23 +1,28 @@
 #!/bin/sh
+#
+# Write/remove a task to do later.
+#
+# Select an existing entry to remove it from the file, or type a new entry to
+# add it.
+#
 
-dnote(){ #: Save a note to the desktop, using a simple form of dmenu.
-	local File="$HOME/Desktop/Saved Notes.txt"
-	if ! [ -f "$File" ]; then
-		> "$File"
-	else
-		if ! [ -w "$File" ]; then
-			printf "ERROR: No write access to notes file.\n"
-			return 1
-		fi
-	fi
+file="$HOME/.todo"
+touch "$file"
+height=$(wc -l "$file" | awk '{print $1}')
+prompt="Add/delete a task: "
 
-	local NOTE=`printf '' | dmenu -p 'NOTE:' -l 1`
-	if [ -z "$NOTE" ]; then
-		printf "ERROR: Cannot save an empty note.\n"
-		return 1
-	else
-		printf "%(%F_%X)T: %s\n" -1 "$NOTE" >> "$File"
-	fi
-}
+cmd=$(dmenu -l "$height" -p "$prompt" "$@" < "$file")
+while [ -n "$cmd" ]; do
+ 	if grep -q "^$cmd\$" "$file"; then
+		grep -v "^$cmd\$" "$file" > "$file.$$"
+		mv "$file.$$" "$file"
+        height=$(( height - 1 ))
+ 	else
+		echo "$cmd" >> "$file"
+		height=$(( height + 1 ))
+ 	fi
 
-dnote
+	cmd=$(dmenu -l "$height" -p "$prompt" "$@" < "$file")
+done
+
+exit 0
