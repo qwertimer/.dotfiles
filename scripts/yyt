@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Description: Copies lines into a dedicated tempory directory with a searchable list for future queries. Used to store git files and other tidbits for testing.
 : "${tmplist="/tmp/tmplist"}"
 file=`mktemp`
 

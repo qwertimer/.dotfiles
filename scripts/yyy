@@ -1,4 +1,6 @@
 #!/bin/bash
+
+#  Description: Simple tool for copying from vim to a temporary file for use with copy and paste. Also adds lines to xclip
 > /tmp/buf
 while IFS= read -r line; do
     echo "$line" >> /tmp/buf

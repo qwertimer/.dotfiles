@@ -9,7 +9,7 @@ shopt -s extglob
 : "${EDITOR:=vi}"
 : "${HELP_BROWSER:=}"
 : "${EXE:="${0##*/}"}"
-: "${GITUSER:="$USER"}"
+: "${GITUSER:="qwertimer"}"
 : "${GITBRANCH:=main}"
 : "${GHREPOS:="$HOME/repos/github.com/$GITUSER"}"
 : "${PRIVATE:="$HOME/Private"}"
@@ -120,95 +120,6 @@ _figure_name() {
   identify -format "F${isosec}-%G.%e" "$1"
 }
 
-x.cast.open() {
-  _checkdep yt
-  yt open "$1"
-}
-
-x.cast.start() {
-  local topic
-  if _have iam; then
-    topic="$(topic)"
-    iam recording "$*" || true
-  fi
-  _have pomo && pomo duration 10m
-  local zetid=$(x.isosec)
-  mkdir "/tmp/$zetid"
-  echo -e "# $*\n\n*remember to turn off music, start recording*\n\n1. Scenario\n2. Solution\n3. Steps\n4. Summary\n" > "/tmp/$zetid/README.md"
-  local zetid
-  zetid=$(x.import "/tmp/$zetid")
-  (( $? == 0 )) && rm -rf "$zetid"
-  x.edit "$zetid"
-  if [[ -n "$topic" ]]; then
-    t "$topic"
-  fi
-  _have pomo && pomo stop
-  x.cast.pending.prep
-}
-
-x.cast.last() { _newest "${CONF[cast.dir]}/Pending"; }
-
-x.cast.pending.paths() {
-	find "${CONF[cast.directory]}/Pending" -type f | sort
-}
-
-x.cast.pending.prep() {
-	for i in $(x.cast.pending.paths); do
-    if [[ $i =~ [0-9]{14,}.mkv ]]; then
-      echo Skipping $i
-      continue
-    fi
-    local zetid
-    zetid=$(x.for "$i")
-    echo "$i -> $zetid.mkv" 
-		mv "$i" "${CONF[cast.directory]}/Pending/$zetid.mkv"
-	done
-}
-
-x.cast.uploads() {
-  while IFS= read -r line;do
-    local ytid=${line%% *}
-    local title=${line#* }
-    [[ $title =~ ^[0-9]{14,}$ ]] || continue
-    echo "$ytid"
-  done < <(yt uploads 50)
-}
-
-x.cast.uploads.sync() {
-  while IFS= read -r ytid;do
-    x.cast.sync "$ytid"
-  done < <(x.cast.uploads)
-}
-
-x.cast.pending.ids() {
-  while IFS= read -r path;do
-    local id=${path##*/}
-    echo ${id%%.*}
-  done < <(x.cast.pending.paths)
-}
-
-x.cast.pending.post() {
-  while IFS= read -r id;do
-    read -u 2 -p "Tags for '$(x.title "$id")'? " -a tags
-    x.post "$id" "${tags[@]}"
-  done < <(x.cast.pending.ids)
-}
-
-x.cast.pending.archive() {
-  while IFS= read -r path;do
-    echo "$path -> ${CONF[cast.directory]}"
-    mv "$path" "${CONF[cast.directory]}"
-  done < <(x.cast.pending.paths)
-}
-
-x.cast.pending.publish() {
-  read -p 'Everything uploaded to YouTube from Pending? ' resp
-  [[ $resp =~ ^[yY] ]] || return 1
-  x.cast.uploads.sync
-  x.cast.pending.post
-  x.cast.pending.archive
-  echo "Don't forget to activate monetization from YouTube GUI."
-}
 
 x.post() {
   _checkdep post || return 1
@@ -240,56 +151,6 @@ x.post() {
   post "$buf"
 }
 
-x.cast.zet() {
-  _filter "$@" && return $?;
-  local video=$(yt video "$1")
-  local name=$(jq -r ".fileDetails.fileName" <<< "$video")
-  local desc=$(jq -r ".snippet.description" <<< "$video")
-  if [[ $desc =~ \[ZETID:([0-9]{14,})\] ]]; then
-    echo "${BASH_REMATCH[1]}"
-    return 0
-  fi
-  if [[ $name =~ ^([0-9]{14,})\.mkv ]]; then
-    echo "${BASH_REMATCH[1]}"
-    return 0
-  fi
-}
-
-x.cast.sync() {
-  local id zetid ytid
-  if [[ $1 = last ]]; then
-    id=$(x.last)
-  else
-    id="${1##*/}"
-  fi
-  if [[ $id =~ ^[0-9]{14,}$ ]]; then
-    zetid="$id"
-    ytid=$(x.video "$zetid") || true
-    ytid=${ytid##*/}
-  else
-    ytid="$id"
-    ytid=${ytid##*/}
-    zetid=$(x.cast.zet "$ytid")
-  fi
-  local n=$'\n' foot desc
-  [[ -z "$ytid" ]] && echo '<failed to lookup ytid>' && return 1
-  [[ -z "$zetid" ]] && echo '<failed to lookup zetid>' && return 1
-  local title=$(x.title "$zetid")
-  local body=$(x.body "$zetid" codeless)
-  local zeturl="https://github.com/$GITUSER/zet/tree/$GITBRANCH/$zetid"
-  [[ -n "${CONF[cast.footer]}" ]] && \
-    foot=$(x.body "${CONF[cast.footer]}")
-  desc="$body$n$n$foot$n${n}[ZETID:$zetid]$n$zeturl"
-  yt publish "$ytid" "$title" "$desc" "${CONF[cast.category]}"
-  x.video "$zetid" "$ytid" > /dev/null
-  echo "👍 synced $zetid -> https://youtu.be/$ytid"
-}
-
-# x.random() { 
-#   local dir
-#   dir=`ls "$(x.dir)" | sort -R | tail -1`
-#   x.edit "$dir"
-# }
 
 x.import() {
     _filter "$@" && return $?
@@ -325,11 +186,6 @@ x.find() { x.dex.titles | grep -iP "$*"; }
 
 x.link() { x.find "$*" | x.mark.link; }
 
-x.chat() {
-  _checkdep chat || return 1
-  _filter "$@" && return $?
-  chat <<< "📜 $(x.title "$1") $(x.url "$1")"
-}
 
 x.url() {
   _filter "$@" && return $?
