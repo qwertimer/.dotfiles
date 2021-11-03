@@ -376,6 +376,7 @@ alias view="vi -R"
 alias sshh='sshpass -f $HOME/.sshpass ssh '
 
 
+alias bat=batcat
 #source bash
 alias sb=". ~/.bashrc"
 
@@ -405,7 +406,7 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 export FZF_DEFAULT_COMMAND="fd . $HOME"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
-
+export FZF_CTRL_R_OPTS='--sort --exact'
 
 # --------------- personal, work and environment configurations --------------
 
