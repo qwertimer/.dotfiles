@@ -1,6 +1,0 @@
-#!/bin/bash
-IFS=$'\n'
-select topic in $(tail "$HOME/.topics"); do
-    t "${topic%[*}"
-    exit
-done
