@@ -145,9 +145,118 @@ fi
 PROMPT_LONG=20
 PROMPT_MAX=95
 PROMPT_AT=@
+docker_ps1() {
 
 __ps1() {
 
+COLOR_RED="\033[0;31m"
+COLOR_YELLOW="\033[0;33m"
+COLOR_GREEN="\033[0;32m"
+COLOR_OCHRE="\033[38;5;95m"
+COLOR_BLUE="\033[0;34m"
+COLOR_WHITE="\033[0;37m"
+COLOR_RESET="\033[0m"
+
+git_color() {
+  local git_status="$(git status 2> /dev/null)"
+
+  if [[ ! $git_status =~ "working directory clean" ]]; then
+    echo -e $COLOR_RED
+  elif [[ $git_status =~ "Your branch is ahead of" ]]; then
+    echo -e $COLOR_YELLOW
+  elif [[ $git_status =~ "nothing to commit" ]]; then
+    echo -e $COLOR_GREEN
+  else
+    echo -e $COLOR_OCHRE
+  fi
+}
+
+git_branch() {
+  local git_status="$(git status 2> /dev/null)"
+  local on_branch="On branch ([^${IFS}]*)"
+  local on_commit="HEAD detached at ([^${IFS}]*)"
+
+  if [[ $git_status =~ $on_branch ]]; then
+    local branch=${BASH_REMATCH[1]}
+    echo "($branch)"
+  elif [[ $git_status =~ $on_commit ]]; then
+    local commit=${BASH_REMATCH[1]}
+    echo "($commit)"
+  fi
+}
+
+PS1=$USER
+
+git_ps1() {
+    #PS1="\[$COLOR_WHITE\]\n[\W]"          # basename of pwd
+    PS1+="\[\$(git_color)\]"        # colors git status
+    PS1+="\$(git_branch)"           #<prints current branch
+    PS1+="\[$COLOR_BLUE\]\$\[$COLOR_RESET\] "   # '#' for root, else '$'
+}
+
+
+docker_check() {
+
+  #Check if in docker container PS1
+
+  if test -f "$DOCKER"; then
+    docker="<docker>"
+    echo "$docker"
+  fi
+
+}
+
+
+virtual_env_t() {
+
+  #Check if in venv PS1
+  if test -n "$VIRTUAL_ENV"; then
+    venv="${VIRTUAL_ENV##*/}"
+    echo "$venv"
+  else
+    venv=""
+    echo "$venv"
+  fi
+}
+
+virtual_env_ps1() {
+    PS1+="\[$COLOR_GREEN\][\W]"
+    PS1+="\$(virtual_env_t)"
+}
+docker_ps1() {
+
+    PS1+="\[$COLOR_OCHRE\]"
+    PS1+="\$(docker_check)"
+}
+directory_check() {
+
+  #Check for root
+  [[ $EUID == 0 ]] && P='#' && y=$r && p=$y # root
+
+  #If dir is root then show /
+  [[ $PWD = / ]] && dir=/ && echo "$dir"
+
+
+  #if dir is home show ~
+  [[ $PWD = "$HOME" ]] && dir='~' && echo "$dir"
+
+}
+
+directory_ps1() {
+    PS1+="\$(directory_check)"
+
+}
+
+__ps1() {
+    PS1=
+    directory_ps1
+    virtual_env_ps1
+    docker_ps1
+    git_ps1
+}
+
+
+__old_ps1() {
 
 
 
@@ -157,14 +266,6 @@ __ps1() {
     y='\[\e[33m\]' p='\[\e[35m\]' w='\[\e[37m\]' \
     c='\[\e[36m\]' x='\[\e[0m\]'  gr='\[\e[32m\]' 
 
-  #Check for root
-  [[ $EUID == 0 ]] && P='#' && y=$r && p=$y # root
-
-  #If dir is root then show /
-  [[ $PWD = / ]] && dir=/
-
-  #if dir is home show ~
-  [[ $PWD = "$HOME" ]] && dir='~'
   
   #git branch in PS1
   B=$(git branch --show-current 2>/dev/null)
@@ -305,12 +406,39 @@ fi
 
 # ------------------------------- source files -------------------------------
 
+#fzf stuff
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+[ -d /usr/share/fzf  ] && source /usr/share/fzf/key-bindings.bash && source /usr/share/fzf/completion.bash
+
+export FZF_DEFAULT_COMMAND='fd . -path './.git' -prune -o -print $HOME'
+export FZF_ALT_C_COMMAND="fd -t d . $HOME"
+
+_fzf_comprun() {
+  local command=$1
+  shift
+
+  case "$command" in
+    cd)           fzf "$@" --preview 'tree -C {} | head -200' ;;
+    export|unset) fzf "$@" --preview "eval 'echo \$'{}" ;;
+    ssh)          fzf "$@" --preview 'dig {}' ;;
+    *)            fzf "$@" ;;
+  esac
+}
 #if [ -f ~/.bashrc-personal ]; then
 #. ~/.bashrc-personal
 #fi
 #source "$HOME/.cargo/env"
 export PATH="$HOME/gems/bin:$PATH"
+
+
+## Source all required files in completions folder.
+if [ -d ~/.bash_completion.d ]; then
+    echo "bash completions added"
+    for file in ~/.bash_completion.d/*; do
+        . $file
+    done
+fi
+
 
 # -------------------------------- completion --------------------------------
 
@@ -359,7 +487,7 @@ alias ??='google'
 alias ???='bing'
 
 #default python
-alias python="/usr/bin/python3.8"
+alias python="/usr/bin/python3.9"
 
 #better pip
 alias pip="python3 -m pip"
@@ -369,18 +497,21 @@ alias st="taskman listtasks"
 alias nt="taskman newtask"
 alias ct="taskman closetask"
 alias vt="taskman viewtask"
-alias ifu="ifuse Documents/iphone"
+alias ifu="ifuse ~/iphone"
 
+
+alias walls="cd ~/.local/share/wallhaven"
 
 alias view="vi -R"
 alias sshh='sshpass -f $HOME/.sshpass ssh '
+alias temp='cd $(mktemp -d)'
 
 
 alias bat=batcat
 #source bash
 alias sb=". ~/.bashrc"
 
-wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
+#wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
 # ------------------------- personalised completions -------------------------
 
 owncomp=(
@@ -412,6 +543,10 @@ export FZF_CTRL_R_OPTS='--sort --exact'
 
 if [ -f ~/.bashrc_envs ]; then
     . ~/.bashrc_envs
+fi
+
+if [[ -f ~/.bash_aliases ]]; then
+    . ~/.bash_aliases
 fi
 
 
