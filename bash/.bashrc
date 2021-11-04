@@ -146,7 +146,8 @@ PROMPT_LONG=20
 PROMPT_MAX=95
 PROMPT_AT=@
 docker_ps1() {
-
+:
+}
 __ps1() {
 
 COLOR_RED="\033[0;31m"
@@ -156,7 +157,7 @@ COLOR_OCHRE="\033[38;5;95m"
 COLOR_BLUE="\033[0;34m"
 COLOR_WHITE="\033[0;37m"
 COLOR_RESET="\033[0m"
-
+}
 git_color() {
   local git_status="$(git status 2> /dev/null)"
 
