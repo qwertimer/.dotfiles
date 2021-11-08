@@ -546,8 +546,8 @@ if [ -f ~/.bashrc_envs ]; then
     . ~/.bashrc_envs
 fi
 
-if [[ -f ~/.bash_aliases ]]; then
-    . ~/.bash_aliases
+if [[ -f ~/.bashrc_aliases ]]; then
+    . ~/.bashrc_aliases
 fi
 
 
