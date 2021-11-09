@@ -6,7 +6,6 @@ iphmount() {
 var=`mktemp -d`
 echo "{$var}"
 ifuse $var
-open $var
 }
 
 

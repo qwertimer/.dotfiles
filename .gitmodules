@@ -4,3 +4,6 @@
 [submodule "__setup/lynx_docker"]
 	path = __setup/lynx_docker
 	url = https://github.com/qwertimer/lynx_docker
+[submodule "ansible"]
+	path = ansible
+	url = https://github.com/qwertimer/ansible

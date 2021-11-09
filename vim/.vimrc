@@ -22,8 +22,10 @@ set showmode
 
 set tabstop=2
 
-"#######################################################################
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" =>General
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set softtabstop=2
 
 " mostly used with >> and <<
@@ -124,10 +126,8 @@ endif
 set hidden
 
 " command history
-set history=100
+set history=10000
 
-" here because plugins and stuff need it
-syntax enable
 
 " faster scrolling
 set ttyfast
@@ -136,54 +136,6 @@ set ttyfast
 " allow sensing the filetype
 " Can be used with ftplugin folder
 filetype plugin on
-
-" high contrast for streaming, etc.
-"set background=dark
-
-" base default color changes (gruvbox dark friendly)
-"hi StatusLine ctermfg=black ctermbg=NONE
-"hi StatusLineNC ctermfg=black ctermbg=NONE
-"hi Normal ctermbg=NONE
-"hi Special ctermfg=cyan
-"hi LineNr ctermfg=black ctermbg=NONE
-"hi SpecialKey ctermfg=black ctermbg=NONE
-"hi ModeMsg ctermfg=black cterm=NONE ctermbg=NONE
-"hi MoreMsg ctermfg=black ctermbg=NONE
-"hi NonText ctermfg=black ctermbg=NONE
-"hi vimGlobal ctermfg=black ctermbg=NONE
-"hi ErrorMsg ctermbg=234 ctermfg=darkred cterm=NONE
-"hi Error ctermbg=234 ctermfg=darkred cterm=NONE
-"hi SpellBad ctermbg=234 ctermfg=darkred cterm=NONE
-"hi SpellRare ctermbg=234 ctermfg=darkred cterm=NONE
-"hi Search ctermbg=236 ctermfg=darkred
-"hi vimTodo ctermbg=236 ctermfg=darkred
-"hi Todo ctermbg=236 ctermfg=darkred
-"hi IncSearch ctermbg=236 cterm=NONE ctermfg=darkred
-"hi MatchParen ctermbg=236 ctermfg=darkred
-"
-"" color overrides
-"au FileType * hi StatusLine ctermfg=black ctermbg=NONE
-"au FileType * hi StatusLineNC ctermfg=black ctermbg=NONE
-"au FileType * hi Normal ctermbg=NONE
-"au FileType * hi Special ctermfg=cyan
-"au FileType * hi LineNr ctermfg=black ctermbg=NONE
-"au FileType * hi SpecialKey ctermfg=black ctermbg=NONE
-"au FileType * hi ModeMsg ctermfg=black cterm=NONE ctermbg=NONE
-"au FileType * hi MoreMsg ctermfg=black ctermbg=NONE
-"au FileType * hi NonText ctermfg=black ctermbg=NONE
-"au FileType * hi vimGlobal ctermfg=black ctermbg=NONE
-"au FileType * hi ErrorMsg ctermbg=234 ctermfg=darkred cterm=NONE
-"au FileType * hi Error ctermbg=234 ctermfg=darkred cterm=NONE
-"au FileType * hi SpellBad ctermbg=234 ctermfg=darkred cterm=NONE
-"au FileType * hi SpellRare ctermbg=234 ctermfg=darkred cterm=NONE
-"au FileType * hi Search ctermbg=236 ctermfg=darkred
-"au FileType * hi vimTodo ctermbg=236 ctermfg=darkred
-"au FileType * hi Todo ctermbg=236 ctermfg=darkred
-"au FileType * hi IncSearch ctermbg=236 cterm=NONE ctermfg=darkred
-"au FileType * hi MatchParen ctermbg=236 ctermfg=darkred
-"au FileType markdown,pandoc hi Title ctermfg=yellow ctermbg=NONE
-"au FileType markdown,pandoc hi Operator ctermfg=yellow ctermbg=NONE
-
 
 let mapleader=' '
 
@@ -195,6 +147,11 @@ nnoremap confr :source $HOME/.vimrc<CR>
 set ruf=%30(%=%#LineNr#%.50F\ [%{strlen(&ft)?&ft:'none'}]\ %l:%c\ %p%%%)
 
 let g:pymode_python = 'python3'
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Plugins
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 fun Plugsetup()
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
@@ -218,8 +175,12 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'mbbill/undotree'
   Plug 'joshdick/onedark.vim'
   Plug 'KeitaNakamura/neodark.vim'
+  Plug 'romgrk/doom-one.vim'
   Plug 'jpalardy/vim-slime', { 'for': 'python' }
   "Plug 'hanschen/vim-ipython-cell', { 'for': 'python' }
+
+  Plug 'mileszs/ack.vim'
+  Plug 'dense-analysis/ale'
 
   call plug#end()
 
@@ -263,29 +224,76 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
     au FileType go nmap <leader>i :GoInfo<CR>
     au FileType go nmap <leader>l :GoMetaLinter!<CR>
   augroup END
-  
+
   "Python highlighting
   let g:python_highlight_all = 1
 else
   autocmd vimleavepre *.go !gofmt -w % " backup if fatih fails
 endif
 
-colorscheme neodark
-"let g:neodark#background = '#202020'
-let g:neodark#terminal_transparent = 1 " default: 0
-let g:neodark#use_256color = 1 " default: 0
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Colors and Fonts
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Enable syntax highlighting
+syntax enable
+
+" Enable 256 colors palette in Gnome Terminal
+if $COLORTERM == 'alacritty'
+    set t_Co=256
+endif
+
+try
+    set background=dark
+    colorscheme elflord
+catch
+    colorscheme desert
+endtry
+
+set background=dark
+
+" Set extra options when running in GUI mode
+if has("gui_running")
+    set guioptions-=T
+    set guioptions-=e
+    set t_Co=256
+    set guitablabel=%M\ %t
+endif
+
+" Set utf8 as standard encoding and en_US as the standard language
+set encoding=utf8
+
+" Use Unix as the standard file type
+set ffs=unix,dos,mac
+
+
 
 highlight Normal guibg=black guifg=white
 set background=dark
 hi Normal ctermbg=None
 
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Undo Tree 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "UndoTree mapping to F5 for multi tree undo and redo
 "nnoremap <F5> :UndotreeToggle<CR>
 "
 "
 "autocmd vimleavepre *.md !perl -p -i -e 's,(?<!\[)my `(\w+)` (package|module|repo|command|utility),[my `\1` \2](https://gitlab.com/rwxrob/\1),g' %
 
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Visual search and replace
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+vnoremap <silent> <leader>r :call VisualSelection('replace', '')<CR>
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Random
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " fill in empty markdown links with duck.com search
 " [some thing]() -> [some thing](https://duck.com/lite?kae=t&q=some thing)
 " s,/foo,/bar,g
@@ -326,12 +334,6 @@ au bufnewfile,bufRead *gitconfig set filetype=gitconfig
 au bufnewfile,bufRead /tmp/psql.edit.* set syntax=sql
 au bufnewfile,bufRead doc.go set spell
 
-" fun! s:DetectGo()
-"     if getline(1) == 'package main'
-"         set ft=go
-"     endif
-" endfun
-" autocmd BufNewFile,BufRead * call s:DetectGo()
 
 " displays all the syntax rules for current position, useful
 " when writing vimscript syntax plugins
@@ -370,13 +372,44 @@ set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ 
 
 
 
-"au BufWritePost ~/.vimrc so ~/.vimrc
+au BufWritePost ~/.vimrc so ~/.vimrc
 
 " functions keys
 map <F1> :set number!<CR> :set relativenumber!<CR>
 nmap <F2> :call <SID>SynStack()<CR>
 set pastetoggle=<F3>
 map <F4> :set list!<CR>
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Spell checking
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Pressing ,ss will toggle and untoggle spell checking
+map <leader>ss :setlocal spell!<cr>
+
+" Shortcuts using <leader>
+map <leader>sn ]s
+map <leader>sp [s
+map <leader>sa zg
+map <leader>s? z=
+
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Misc
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Remove the Windows ^M - when the encodings gets messed up
+noremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
+
+" Quickly open a buffer for scribble
+map <leader>q :e ~/buffer<cr>
+
+" Quickly open a markdown buffer for scribble
+map <leader>x :e ~/buffer.md<cr>
+
+" Toggle paste mode on and off
+map <leader>pp :setlocal paste!<cr>
+
 
 
 "=================================================================================
@@ -518,5 +551,25 @@ au FileType python map <buffer> <leader>D ?def
 let mapleader='\'
 
 
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Ale (syntax checker and linter)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:ale_linters = {
+\   'javascript': ['eslint'],
+\   'python': ['flake8'],
+\   'go': ['go', 'golint', 'errcheck']
+\}
+
+nmap <silent> <leader>a <Plug>(ale_next_wrap)
+
+" Disabling highlighting
+let g:ale_set_highlights = 0
+
+" Only run linting when saving the file
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_lint_on_enter = 1
+
+set omnifunc=ale#completion#OmniFunc
 
 

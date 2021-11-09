@@ -60,7 +60,7 @@ x_symlinks() {
           VIM_FOLDER="$HOME/.vim/"
           test -d ~/.vim || mkdir ~/.vim
           #ln -sf "$DOT/vim/" "$VIM_FOLDER"
-          #ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
+          ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
 
 # ----------------------------- xmonad and xmobar ----------------------------
           XMOBAR_FOLDER="$HOME/.config"

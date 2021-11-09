@@ -1,4 +1,3 @@
-
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
@@ -84,7 +83,7 @@ export GEM_HOME="$HOME/gems"
 
 
 source /etc/profile.d/bash_completion.sh
-alias vi=vim
+
 # ---------------------------------- history ---------------------------------
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -139,14 +138,13 @@ if (command -v dircolors) &>/dev/null; then
   fi
 fi
 
-
 # --------------------------- smart prompt ---------------------------
 
 PROMPT_LONG=20
 PROMPT_MAX=95
 PROMPT_AT=@
 docker_ps1() {
-:
+  :
 }
 __ps1() {
 
@@ -158,6 +156,7 @@ COLOR_BLUE="\033[0;34m"
 COLOR_WHITE="\033[0;37m"
 COLOR_RESET="\033[0m"
 }
+
 git_color() {
   local git_status="$(git status 2> /dev/null)"
 
@@ -233,13 +232,6 @@ directory_check() {
 
   #Check for root
   [[ $EUID == 0 ]] && P='#' && y=$r && p=$y # root
-
-  #If dir is root then show /
-  [[ $PWD = / ]] && dir=/ && echo "$dir"
-
-
-  #if dir is home show ~
-  [[ $PWD = "$HOME" ]] && dir='~' && echo "$dir"
 
 }
 
@@ -413,6 +405,7 @@ fi
 
 export FZF_DEFAULT_COMMAND='fd . -path './.git' -prune -o -print $HOME'
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
+export FZF_CTRL_R_OPTS='--sort --exact'
 
 _fzf_comprun() {
   local command=$1
@@ -425,16 +418,11 @@ _fzf_comprun() {
     *)            fzf "$@" ;;
   esac
 }
-#if [ -f ~/.bashrc-personal ]; then
-#. ~/.bashrc-personal
-#fi
-#source "$HOME/.cargo/env"
 export PATH="$HOME/gems/bin:$PATH"
 
 
 ## Source all required files in completions folder.
 if [ -d ~/.bash_completion.d ]; then
-    echo "bash completions added"
     for file in ~/.bash_completion.d/*; do
         . $file
     done
@@ -474,6 +462,9 @@ fi
 #Make ip have colours
 alias ip='ip -br -c'
 
+
+alias vi=vim
+
 #locations
 alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
@@ -508,7 +499,7 @@ alias sshh='sshpass -f $HOME/.sshpass ssh '
 alias temp='cd $(mktemp -d)'
 
 
-alias bat=batcat
+alias bat="batcat"
 #source bash
 alias sb=". ~/.bashrc"
 
@@ -518,37 +509,10 @@ alias sb=". ~/.bashrc"
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
-  venvwrap n 
+  venvwrap n
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
-
-
-# ----------------------------------- other ----------------------------------
-source "$DOTFILES/snippets/sh/colours"
-
-
-# -------------------------------- fzf configs -------------------------------
-export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
---color=dark
---color=fg:-1,bg:-1,hl:#5fff87,fg+:-1,bg+:-1,hl+:#ffaf5f
---color=info:#af87ff,prompt:#5fff87,pointer:#ff87d7,marker:#ff87d7,spinner:#ff87d7
-'
-
-export FZF_DEFAULT_COMMAND="fd . $HOME"
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_ALT_C_COMMAND="fd -t d . $HOME"
-export FZF_CTRL_R_OPTS='--sort --exact'
-
-# --------------- personal, work and environment configurations --------------
-
-if [ -f ~/.bashrc_envs ]; then
-    . ~/.bashrc_envs
-fi
-
-if [[ -f ~/.bashrc_aliases ]]; then
-    . ~/.bashrc_aliases
-fi
 
 
 # ---------------------------- Program completions ---------------------------
@@ -566,3 +530,9 @@ _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
 
+
+# ----------------------------- Personal Configs -----------------------------
+
+_source_if "~/.bashrc_envs"
+_source_if "~/.bash_aliases"
+_source_if "$DOTFILES/snippets/sh/colors"
