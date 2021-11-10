@@ -26,7 +26,7 @@ case $chosen in
         apps_as_root 'alacritty --class alacritty-float,alacritty-float --config-file /root/.config/bspwm/alacritty/alacritty.yml'
         ;;
     $files)
-        apps_as_root 'dbus-run-session pcmanfm'
+        apps_as_root 'dbus-run-session nautilus'
         ;;
     $editor)
         apps_as_root geany
