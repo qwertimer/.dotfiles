@@ -38,7 +38,9 @@ super + o
     rofi-beats
 
 super + l
-    xautolock -locknow
+    WINDOW_ID=`xdotool search --classname Desktop`
+    xdg-screensaver suspend $WINDOW_ID
+    #xautolock -locknow
 
 
 ## Workspace and program management
