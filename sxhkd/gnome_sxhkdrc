@@ -1,5 +1,6 @@
 ## sxhkd for gnome ubuntu installation.
 
+#Help tool
 super + question
   helpsxhkd
 
@@ -17,12 +18,12 @@ alt + comma
 
 # Rofi App Launcher
 {alt, super} + F1
-	sh ~/.config/bspwm/rofi/bin/launcher
+	sh ~/.config/rofi/bin/launcher
     
 
 # Rofi Menus/Applets
 super + {w}
-	sh ~/.config/bspwm/rofi/bin/{windows}
+	sh ~/.config/rofi/bin/{windows}
 
 # Launch Apps ((f)Pcmanfm, (w)firefox, (m)music, (e)emacs)
 super + shift + {f,w,e}
@@ -37,13 +38,10 @@ super + o
     rofi-beats
 
 super + l
-    light-locker
+    xautolock -locknow
 
 
-
-
-
-
+## Workspace and program management
 
 # Close App, kill app
 super + {_,shift + }q
@@ -60,6 +58,9 @@ super + shift + {1-9,0}
 #(off by 1 as gnome uses 0 based workspaces)
 super + {1-9,0}
     xdotool set_desktop {0-8,9}
+
+
+#Screenshots (Need to fix)
 
 # Take a screenshot
 Print
