@@ -1,8 +1,0 @@
-
-#Arch: Close screen
-super + shift + c
-    sleep 0.5; xset dpms force standby
-
-#Arch: Lock screen
-super + shift + x
-    betterlockscreen -l dim -t ''
