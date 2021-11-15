@@ -1,0 +1,13 @@
+# Read .env file for whatever program you are using it for.
+# Usage 
+#   $1 - key_name -- ie. STREAMKEY
+#   $2 file to read from
+read_var() {
+    VAR=$(grep $1 $2 | xargs)
+    IFS="=" read -ra VAR <<< "$VAR"
+    echo ${VAR[1]}
+}
+
+
+read_var "$@"
+

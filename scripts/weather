@@ -1,2 +1,2 @@
 #!/bin/sh
-exec curl -L wttr.in
+exec curl -L v2.wttr.in/Sydney

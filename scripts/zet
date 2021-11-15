@@ -236,6 +236,8 @@ x.commit() {
   local title
   title=$(x.title "$1")
   cd "$dir"
+  ls
+  git pull -m "Merge Upstream" &>dev/null
   git add -A "$dir"
   git commit -m "$title"
   git push
@@ -337,6 +339,7 @@ x.create() {
   line=$(head -1 "$dir/README.md" | sed 's/#\+ *//')
   test -n "$line"
   echo "Committing: $line"
+  git pull -q
   git add -A "$dir" &>/dev/null
   git commit -m "$line" &>/dev/null
   git push &>/dev/null

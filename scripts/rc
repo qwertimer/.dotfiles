@@ -1,0 +1,5 @@
+#!/bin/sh
+
+prog="$(fd -d 7 -H ^$1$ ~ | head -n 1)"
+
+vi $prog
