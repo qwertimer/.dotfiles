@@ -11,24 +11,39 @@
 # that window to press enter to remove the annoyance of the press any
 # key to continue message that appears when you run external commands.
 
+info() {
+  echo "Opens up duckduckgo search in lynx either in a tmux tab or straight from the cli"
+}
 
-if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
-    
-    val=`tmux lsw -F '#{window_name}#{window_active}'|sed -n 's|^\(.*\)1$|\1|p'`
-    tmux has-session -t $session:9 2>/dev/null 
-    if [ $? = 0 ]; then 
-        tmux send-keys -t $session:9 "q exit"
-    fi
-    tmux new-window -t $session:9
+main() {
+  if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
+      val=`tmux lsw -F '#{window_name}#{window_active}'|sed -n 's|^\(.*\)1$|\1|p'`
+      tmux has-session -t $session:9 2>/dev/null 
+      if [ $? = 0 ]; then 
+          tmux send-keys -t $session:9 "q exit"
+      fi
+      tmux new-window -t $session:9
 
-    tmux send -t $session:9 "exec lynx \
-        'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
-    tmux select-window -t $session:9
+      tmux send -t $session:9 "exec lynx \
+          'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
+      tmux select-window -t $session:9
 
-    if [ $val = "vim" ]; then 
-        echo "vim is here"
-        tmux send-keys -t $session:$val "C-m"
-    fi
-else
-    exec lynx "https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*"
-fi
+      if [ $val = "vim" ]; then 
+          echo "vim is here"
+          tmux send-keys -t $session:$val "C-m"
+      fi
+  else
+      exec lynx "https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*"
+  fi
+
+}
+
+case "$@" in
+  -info)
+    info
+    ;;
+  *)
+    main "$@"
+    ;;
+esac
+

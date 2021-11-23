@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Description: Simple program to parse descriptions of scripts and
+# display in yad
+
+declare -a files=$(ls -1 -d $SCRIPTS/*)
+while read -r file;
+do 
+  $file -h
+done <<<${files[@]}
