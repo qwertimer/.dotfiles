@@ -12,4 +12,10 @@ sudo iptables -t nat -A POSTROUTING -o $WLAN -j MASQUERADE
 sudo iptables -A FORWARD -i $LAN -o $WLAN -j ACCEPT
 sudo iptables -A FORWARD -i $WLAN -o $LAN -m state --state RELATED,ESTABLISHED -j ACCEPT
 echo "Tailing DHCP leases file:"
-tail -f /var/lib/misc/dnsmasq.leases
+
+sleep 10
+
+while read -ar LEASES; do
+  nmap -sV -p- "${LEASES[@]}"
+done < /var/lib/misc/dnsmasq.leases
+#while read -r; do printf '%s\n' "$REPLY"; done < /var/lib/misc/dnsmasq.leases

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd ~/Work/presentations/docker
+lookatme -e terminal slides.md
+

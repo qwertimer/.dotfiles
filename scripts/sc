@@ -1,0 +1,6 @@
+#!/bin/sh
+ #: Perform mathematical calculations via AWK.
+awk -SP "BEGIN {print($*)}" 2> /dev/null
+
+
+

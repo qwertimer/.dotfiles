@@ -1,0 +1,40 @@
+#!/bin/bash
+
+
+RED='\033[0;31m'
+GRAY='\033[0;37m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+
+scannet() {
+  declare -a var
+  while IFS='(' read -a Line; do
+    var+=( "${Line[1]%%)*}" )
+  done < <(arp -a | grep "$1");
+  printf '%b\nFound these IP addresses:\n' "${GRAY}" 
+  for item in "${var[@]}"; do
+    printf '%b%s\n' "${GREEN}" "$item"
+  done
+  printf "$NC"
+  for i in "${var[@]}"; do
+    printf "Scanning %b%s\n%b" "${RED}" "$i" "$NC"
+    #printf "Checking OS\n"
+    #sudo nmap -O "$i"
+    #printf "Checking hostname\n"
+    #nmap -sL "$i"
+    nmap -sV -p- "$i"
+  done
+
+}
+
+
+printf "%b\nNetwork protocols available to scan%b\n" "${GRAY}" "${RED}"
+ifconfig -a | grep UP | grep -E "e(th|n)|wl" | sed 's/:.*//;/^$/d'
+printf "$NC"
+read -p "Which network would you like to scan: " net
+
+scannet "$net"
+
+
+
