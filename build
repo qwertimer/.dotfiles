@@ -46,7 +46,10 @@ x_symlinks() {
           ln -sf "$DOT/bash/.bashrc-personal" "$HOME/.bashrc-personal"
           ln -sf "$DOT/bash/.bash_profile" "$HOME/.bash_profile"     #replace with home
           ln -sf "$DOT/bash/.profile" "$HOME/.profile"     #replace with home
+          ln -sf "$DOT/bash/.ps1_christmas" "$HOME/.ps1_christmas"
+          ln -sf "$DOT/bash/.ps1_rwxrob" "$HOME/.ps1_rwxrob"
 
+          ln -sf "$DOT/bash/.ps1_jfrazelle" "$HOME/.ps1_jfrazelle"
 # --------------------------------- dircolors --------------------------------
           ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
 

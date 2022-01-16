@@ -62,7 +62,6 @@ export HELP_BROWSER=lynx
 #grep
 #export GREP_OPTIONS=' — color=auto'
 
-
 # ------------------------ programmming env variables ------------------------
 export PYTHONDONTWRITEBYTECODE=1
 
@@ -83,7 +82,6 @@ export PICO_PLAYGROUND_PATH=$HOME/Documents/pico/pico/pico-playground
 export GEM_HOME="$HOME/gems"
 
 
-source /etc/profile.d/bash_completion.sh
 alias vi=vim
 # ---------------------------------- history ---------------------------------
 # don't put duplicate lines or lines starting with space in the history.
@@ -141,180 +139,10 @@ fi
 
 
 # --------------------------- smart prompt ---------------------------
-
-PROMPT_LONG=20
-PROMPT_MAX=95
-PROMPT_AT=@
-docker_ps1() {
-:
-}
-__ps1() {
-
-COLOR_RED="\033[0;31m"
-COLOR_YELLOW="\033[0;33m"
-COLOR_GREEN="\033[0;32m"
-COLOR_OCHRE="\033[38;5;95m"
-COLOR_BLUE="\033[0;34m"
-COLOR_WHITE="\033[0;37m"
-COLOR_RESET="\033[0m"
-}
-git_color() {
-  local git_status="$(git status 2> /dev/null)"
-
-  if [[ ! $git_status =~ "working directory clean" ]]; then
-    echo -e $COLOR_RED
-  elif [[ $git_status =~ "Your branch is ahead of" ]]; then
-    echo -e $COLOR_YELLOW
-  elif [[ $git_status =~ "nothing to commit" ]]; then
-    echo -e $COLOR_GREEN
-  else
-    echo -e $COLOR_OCHRE
-  fi
-}
-
-git_branch() {
-  local git_status="$(git status 2> /dev/null)"
-  local on_branch="On branch ([^${IFS}]*)"
-  local on_commit="HEAD detached at ([^${IFS}]*)"
-
-  if [[ $git_status =~ $on_branch ]]; then
-    local branch=${BASH_REMATCH[1]}
-    echo "($branch)"
-  elif [[ $git_status =~ $on_commit ]]; then
-    local commit=${BASH_REMATCH[1]}
-    echo "($commit)"
-  fi
-}
-
-PS1=$USER
-
-git_ps1() {
-    #PS1="\[$COLOR_WHITE\]\n[\W]"          # basename of pwd
-    PS1+="\[\$(git_color)\]"        # colors git status
-    PS1+="\$(git_branch)"           #<prints current branch
-    PS1+="\[$COLOR_BLUE\]\$\[$COLOR_RESET\] "   # '#' for root, else '$'
-}
-
-
-docker_check() {
-
-  #Check if in docker container PS1
-
-  if test -f "$DOCKER"; then
-    docker="<docker>"
-    echo "$docker"
-  fi
-
-}
-
-
-virtual_env_t() {
-
-  #Check if in venv PS1
-  if test -n "$VIRTUAL_ENV"; then
-    venv="${VIRTUAL_ENV##*/}"
-    echo "$venv"
-  else
-    venv=""
-    echo "$venv"
-  fi
-}
-
-virtual_env_ps1() {
-    PS1+="\[$COLOR_GREEN\][\W]"
-    PS1+="\$(virtual_env_t)"
-}
-docker_ps1() {
-
-    PS1+="\[$COLOR_OCHRE\]"
-    PS1+="\$(docker_check)"
-}
-directory_check() {
-
-  #Check for root
-  [[ $EUID == 0 ]] && P='#' && y=$r && p=$y # root
-
-  #If dir is root then show /
-  [[ $PWD = / ]] && dir=/ && echo "$dir"
-
-
-  #if dir is home show ~
-  [[ $PWD = "$HOME" ]] && dir='~' && echo "$dir"
-
-}
-
-directory_ps1() {
-    PS1+="\$(directory_check)"
-
-}
-
-__ps1() {
-    PS1=
-    directory_ps1
-    virtual_env_ps1
-    docker_ps1
-    git_ps1
-}
-
-
-__old_ps1() {
-
-
-
-  local DOCKER=/.dockerenv
-  local P='$' dir="${PWD##*/}" B countme short long double\
-    r='\[\e[31m\]' g='\[\e[30m\]' b='\[\e[34m\]' \
-    y='\[\e[33m\]' p='\[\e[35m\]' w='\[\e[37m\]' \
-    c='\[\e[36m\]' x='\[\e[0m\]'  gr='\[\e[32m\]' 
-
-  
-  #git branch in PS1
-  B=$(git branch --show-current 2>/dev/null)
-  [[ $dir = "$B" ]] && B=.
-
-  #Check if in docker container PS1
-
-  if test -f "$DOCKER"; then
-    docker="<docker>"
-  fi
-
-  #Check if in venv PS1
-  if test -n "$VIRTUAL_ENV"; then
-    venv="${VIRTUAL_ENV##*/}"
-  else
-    venv=""
-  fi
-
-  countme="$doc$venv$USER$PROMPT_AT$(hostname):$dir($B)\$ "
-
-  [[ $B = master || $B = main ]] && b="$r"
-  
-
-
-  test -n "$venv" && venv="$c($c$venv$c)"
-  [[ -n "$B" ]] && B="$gr($c$B$gr)"
-  doc=$gr$docker
-  AT="$b$PROMPT_AT"
-  dir="$w$dir"
-  long_t="$gr╔ "
-  double_pl="$gr║ "
-  long_b="$gr╚ "
-  sym="$p$P"
-
-  short="$y\u$doc$venv$AT$h\h$g:$dir$B$sym$x "
-  long="$long_t$y\u$doc$venv$AT$h\h$g:$dir$B\n$long_b$sym$x "
-  double="$long_t$y\u$doc$venv$AT$h\h$g:$dir\n$double_pl$B\n$long_b$p$P$x "
-
-  if (( ${#countme} > PROMPT_MAX )); then
-    PS1="$double"
-  elif (( ${#countme} > PROMPT_LONG )); then
-    PS1="$long"
-  else
-    PS1="$short"
-  fi
-}
-
-PROMPT_COMMAND="__ps1"
+#. ~/.ps1_christmas
+. ~/.bash_prompt
+#. ~/.ps1_jfrazelle
+#PROMPT_COMMAND="__ps1"
 # ------------------------- Path add/remove functions ------------------------
 
 pathappend() {
@@ -518,7 +346,7 @@ alias sb=". ~/.bashrc"
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
-  venvwrap n 
+  venvwrap n dockerfunc
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
@@ -550,8 +378,15 @@ if [[ -f ~/.bashrc_aliases ]]; then
     . ~/.bashrc_aliases
 fi
 
+for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
+	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
+done
+unset file
+
 
 # ---------------------------- Program completions ---------------------------
+
+_source_if "/etc/profile.d/bash_completion.sh"
 
 _have gh && . <(gh completion -s bash)
 _have pandoc && . <(pandoc --bash-completion)
@@ -566,3 +401,11 @@ _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
 
+
+# Add tab completion for SSH hostnames based on ~/.ssh/config
+# ignoring wildcards
+[[ -e "$HOME/.ssh/config" ]] && complete -o "default" \
+	-o "nospace" \
+	-W "$(grep "^Host" ~/.ssh/config | \
+	grep -v "[?*]" | cut -d " " -f2 | \
+	tr ' ' '\n')" scp sftp ssh

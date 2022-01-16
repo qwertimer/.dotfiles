@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Simple script to show all currently active devices on the network.wlp5s0
-broadcast=$(ip addr show enp6s0 | awk '$1 == "inet" &&  $4 !~ /^host/ { print $4"/24" }' | uniq)
+broadcast=$(ip addr show wlp5s0 | awk '$1 == "inet" &&  $4 !~ /^host/ { print $4"/24" }' | uniq)
 
 RED='\033[0;31m'
 GRAY='\033[0;37m'

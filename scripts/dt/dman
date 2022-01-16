@@ -8,7 +8,7 @@
 # Contributors: Derek Taylor
 
 # Defining the terminal emulator to use.
-DMTERM="st -e"
+DMTERM="alacritty -e"
 
 # An array of options to choose.
 declare -a options=(

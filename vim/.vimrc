@@ -7,41 +7,29 @@ set nocompatible
 
 " automatically indent new lines
 set autoindent
-
 " automatically write files when changing when multiple files open
 set autowrite
-
 " activate line numbers
 set number
-
 " turn col and row position on in bottom right
 set ruler " see ruf for formatting
-
 " show command and insert mode
 set showmode
-
-set tabstop=2
-
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " =>General
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set tabstop=2
 set softtabstop=2
-
-" mostly used with >> and <<
 set shiftwidth=2
-
 set smartindent
-
 set smarttab
 
 if v:version >= 800
   " stop vim from silently messing with files that it shouldn't
   set nofixendofline
-
   " better ascii friendly listchars
   set listchars=space:*,trail:*,nbsp:*,extends:>,precedes:<,tab:\|>
-
   " i hate automatic folding
   set foldmethod=manual
   set nofoldenable
@@ -49,49 +37,42 @@ endif
 
 " mark trailing spaces as errors
 match ErrorMsg '\s\+$'
-
 " enough for line numbers + gutter within 80 standard
 set textwidth=72
-
 " replace tabs with spaces automatically
 set expandtab
-
 " disable relative line numbers, remove no to sample it
 set norelativenumber
-
 " makes ~ effectively invisible
 "highlight NonText guifg=bg
-
 " turn on default spell checking
-"set spell
-
+set spell
 " more risky, but cleaner
 set nobackup
 set noswapfile
 set nowritebackup
-
 set icon
-
 " center the cursor always on the screen
 "set scrolloff=999
-
 " highlight search hits
 set hlsearch
 set incsearch
 set linebreak
-
 " avoid most of the 'Hit Enter ...' messages
 set shortmess=aoOtTI
-
 " prevents truncated yanks, deletes, etc.
 set viminfo='20,<1000,s1000
-
 " not a fan of bracket matching or folding
 let g:loaded_matchparen=1
 set noshowmatch
-
 " wrap around when searching
 set wrapscan
+" stop complaints about switching buffer with changes
+set hidden
+" command history
+set history=10000
+" faster scrolling
+set ttyfast
 
 " Just the defaults, these are changed per filetype by plugins.
 " Most of the utility of all of this has been superceded by the use of
@@ -122,16 +103,6 @@ if $PLATFORM == 'mac'
   set backspace=indent,eol,start
 endif
 
-" stop complaints about switching buffer with changes
-set hidden
-
-" command history
-set history=10000
-
-
-" faster scrolling
-set ttyfast
-
 
 " allow sensing the filetype
 " Can be used with ftplugin folder
@@ -142,7 +113,7 @@ let mapleader=' '
 
 " Edit/Reload vimr configuration file
 nnoremap confe :e $HOME/.vimrc<CR>
-nnoremap confr :source $HOME/.vimrc<CR>
+au BufWritePost ~/.vimrc so ~/.vimrc
 
 set ruf=%30(%=%#LineNr#%.50F\ [%{strlen(&ft)?&ft:'none'}]\ %l:%c\ %p%%%)
 
@@ -153,38 +124,78 @@ let g:pymode_python = 'python3'
 " => Plugins
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-fun Plugsetup()
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-endfun
+function Plugsetup()
+  !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim 
+endfunction
+
+
 " only load plugins if Plug detected
 if filereadable(expand("~/.vim/autoload/plug.vim"))
 
   call plug#begin('~/.vimplugins')
+
   Plug 'sheerun/vim-polyglot'
   Plug 'vim-pandoc/vim-pandoc'
   Plug 'rwxrob/vim-pandoc-syntax-simple'
-  "Plug 'cespare/vim-toml'
-  "Plug 'pangloss/vim-javascript'
   Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-  Plug 'PProvost/vim-ps1'
+
   Plug 'tpope/vim-fugitive'
-  Plug 'morhetz/gruvbox'
   "Plug 'frazrepo/vim-rainbow'
+
   Plug 'mhinz/vim-startify'
+
   Plug 'mbbill/undotree'
+
+  Plug 'morhetz/gruvbox'
   Plug 'joshdick/onedark.vim'
   Plug 'KeitaNakamura/neodark.vim'
   Plug 'romgrk/doom-one.vim'
-  Plug 'jpalardy/vim-slime', { 'for': 'python' }
-  "Plug 'hanschen/vim-ipython-cell', { 'for': 'python' }
 
   Plug 'mileszs/ack.vim'
   Plug 'dense-analysis/ale'
 
+  Plug 'itchyny/lightline.vim'
+
+  Plug 'neoclide/coc.nvim', {'branch': 'release'}
+  "Deoplete with tabnine
+  "if has('nvim')
+  "  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+  "else
+  "  Plug 'Shougo/deoplete.nvim'
+  "  Plug 'roxma/nvim-yarp'
+  "  Plug 'roxma/vim-hug-neovim-rpc'
+  "  Plug 'tbodt/deoplete-tabnine', { 'do': './install.sh' }
+  "endif
+  "let g:deoplete#enable_at_startup = 1
+
   call plug#end()
 
+  """"""""""""""""""""""""""""""""""""""
+  "" Configure coc
+  """"""""""""""""""""""""""""""""""""""
+  inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+  inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+  " use <tab> for trigger completion and navigate to the next complete item
+  function! s:check_back_space() abort
+    let col = col('.') - 1
+    return !col || getline('.')[col - 1]  =~ '\s'
+  endfunction
+
+  inoremap <silent><expr> <Tab>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<Tab>" :
+      \ coc#refresh()
+
+  """""""""""""""""""""""""""""""""""""
+  "lightline
+  """""""""""""""""""""""""""""""""""""
+  let g:lightline = {
+  \ 'colorscheme': 'onedark',
+  \}
+  """"""""""""""""""""""""""""""""""""
   " rainbox
+  """"""""""""""""""""""""""""""""""""
   " au FileType c,cpp,objc,objcpp call rainbow#load() " by type or ...
   let g:rainbow_active = 1                            " globally
 
@@ -244,14 +255,8 @@ if $COLORTERM == 'alacritty'
     set t_Co=256
 endif
 
-try
-    set background=dark
-    colorscheme elflord
-catch
-    colorscheme desert
-endtry
-
 set background=dark
+colorscheme elflord
 
 " Set extra options when running in GUI mode
 if has("gui_running")
@@ -270,7 +275,6 @@ set ffs=unix,dos,mac
 
 
 highlight Normal guibg=black guifg=white
-set background=dark
 hi Normal ctermbg=None
 
 
@@ -281,14 +285,14 @@ hi Normal ctermbg=None
 "nnoremap <F5> :UndotreeToggle<CR>
 "
 "
-"autocmd vimleavepre *.md !perl -p -i -e 's,(?<!\[)my `(\w+)` (package|module|repo|command|utility),[my `\1` \2](https://gitlab.com/rwxrob/\1),g' %
 
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Visual search and replace
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-vnoremap <silent> <leader>r :call VisualSelection('replace', '')<CR>
+"Need visualselection tool
+"vnoremap <silent> <leader>r :call VisualSelection('replace', '')<CR>
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -372,7 +376,6 @@ set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ 
 
 
 
-au BufWritePost ~/.vimrc so ~/.vimrc
 
 " functions keys
 map <F1> :set number!<CR> :set relativenumber!<CR>
@@ -384,8 +387,6 @@ map <F4> :set list!<CR>
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Spell checking
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Pressing ,ss will toggle and untoggle spell checking
-map <leader>ss :setlocal spell!<cr>
 
 " Shortcuts using <leader>
 map <leader>sn ]s
@@ -503,29 +504,16 @@ ab teh the
 nmap <leader>n : <C-6>
 "yank to xclip
 vnoremap <silent><Leader>y "yy <Bar> :call system('xclip', @y)<CR>
+" map ppp paste command to leader p
+nmap <leader>p !!ppp<CR>
+" map paste from last tempfile to leader l
+nmap <leader>l :r `lasty`<CR>
+
 
 
 " Set TMUX window name to name of file
 "au fileopened * !tmux rename-window TESTING
 
-" read personal/private vim configuration (keep last to override)
-set rtp^=~/.vimpersonal
-set rtp^=~/.vimprivate
-set rtp^=~/.vimwork
-
-
-" map ppp paste command to leader p
-nmap <leader>p !!ppp<CR>
-
-" map paste from last tempfile to leader l
-nmap <leader>l :r `lasty`<CR>
-
-
-" Quickly open a buffer for scribble
-nmap <leader>q :e ~/buffer<CR>
-
-" Quickly open a markdown buffer for scribble
-nmap <leader>x :e ~/buffer.md<CR>
 
 
 """"""""""""""""""""""""""""""
@@ -572,4 +560,9 @@ let g:ale_lint_on_enter = 1
 
 set omnifunc=ale#completion#OmniFunc
 
+
+" read personal/private vim configuration (keep last to override)
+set rtp^=~/.vimpersonal
+set rtp^=~/.vimprivate
+set rtp^=~/.vimwork
 

@@ -1,0 +1,8 @@
+case "$@" in;
+  -info)
+    info
+    ;;
+  *)
+    main "$@"
+    ;;
+esac
