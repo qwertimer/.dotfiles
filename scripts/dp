@@ -1,0 +1,3 @@
+#!/bin/bash
+# Display text wrapped to the column width. Useful for terminal fun
+figlet -w "$(tput cols)" "$@" | lolcat

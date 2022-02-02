@@ -50,6 +50,7 @@ x_symlinks() {
           ln -sf "$DOT/bash/.ps1_rwxrob" "$HOME/.ps1_rwxrob"
 
           ln -sf "$DOT/bash/.ps1_jfrazelle" "$HOME/.ps1_jfrazelle"
+          ln -sf "$DOT/bash/.bash_prompt" "$HOME/.bash_prompt"
 # --------------------------------- dircolors --------------------------------
           ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
 

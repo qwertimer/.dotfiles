@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Simple truncation tool to fit in the terminal window. Taken from
+# QMACRO(https:
+# //github.com/qmacro/dotfiles/blob/e9d26da57a8ef161890ab17d6e9abb71fa5ccd1f/scripts/trunc)
+
+cut -c 1-"$(tput cols)"

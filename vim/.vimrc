@@ -530,6 +530,7 @@ au FileType python map <buffer> <leader>C ?class
 au FileType python map <buffer> <leader>D ?def 
 
 
+au filetype python nnoremap <buffer> K :<C-u>execute "!pydoc3 " . expand("<cword>")<CR>
 
 """"""""""""""""""""""""""""
 " Set secondary leader
@@ -559,7 +560,6 @@ let g:ale_lint_on_text_changed = 'never'
 let g:ale_lint_on_enter = 1
 
 set omnifunc=ale#completion#OmniFunc
-
 
 " read personal/private vim configuration (keep last to override)
 set rtp^=~/.vimpersonal

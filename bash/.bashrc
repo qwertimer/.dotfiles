@@ -328,6 +328,12 @@ alias ct="taskman closetask"
 alias vt="taskman viewtask"
 alias ifu="ifuse ~/iphone"
 
+# Interactive --- make sure you don't overwirte things.
+alias mv='mv -i'
+alias cp='cp -i'
+alias rm='rm -i'
+alias ln='ln -i'
+alias please="sudo !! "
 
 alias walls="cd ~/.local/share/wallhaven"
 
