@@ -34,74 +34,119 @@ x_scriptslink() {
 }
 
 
+
+x_addDirs() {
+    mkdir -p $HOME/.local/share/ansible
+    mkdir -p $HOME/.bash_completion.d
+    mkdir -p $HOME/.config/bspwm
+    mkdir -p $HOME/.config/sxhkd
+    mkdir -p $HOME/.config/polybar
+
+
+    #mkdir -p ~/.gnupg
+
+}
+
 x_symlinks() {
 
-    # Create symlinks.
-    echo "Creating Symlinks"
-    #DOT=$HOME/repos/github.com/qwertimer/.dotfiles
-    DOT=$PWD
+  # Create symlinks.
+  echo "Creating Symlinks"
+  DOT=$PWD
 # ----------------------------------- bash -----------------------------------
-          ln -sf "$DOT/bash/.bashrc" "$HOME/.bashrc"
-          ln -sf "$DOT/bash/.bashrc-common" "$HOME/.bashrc-common"
-          ln -sf "$DOT/bash/.bashrc-personal" "$HOME/.bashrc-personal"
-          ln -sf "$DOT/bash/.bash_profile" "$HOME/.bash_profile"     #replace with home
-          ln -sf "$DOT/bash/.profile" "$HOME/.profile"     #replace with home
-          ln -sf "$DOT/bash/.ps1_christmas" "$HOME/.ps1_christmas"
-          ln -sf "$DOT/bash/.ps1_rwxrob" "$HOME/.ps1_rwxrob"
 
-          ln -sf "$DOT/bash/.ps1_jfrazelle" "$HOME/.ps1_jfrazelle"
-          ln -sf "$DOT/bash/.bash_prompt" "$HOME/.bash_prompt"
+## Change to 
+  ln -sf "$DOT/bash/" "$HOME/"
 # --------------------------------- dircolors --------------------------------
-          ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
+  ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
 
 # ------------------------------------ git -----------------------------------
-          ln -sf "$DOT/git" "$HOME/git"
-          ln -sf "$DOT/gh/.gh_comp" "$HOME/"
+  #ln -sf "$DOT/git" "$HOME/git"
+  ln -sf "$DOT/gh/.gh_comp" "$HOME/"
 # ----------------------------------- tmux -----------------------------------
-          ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
+  ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
 
 # ------------------------------------ vim -----------------------------------
-          VIM_FOLDER="$HOME/.vim/"
-          test -d ~/.vim || mkdir ~/.vim
-          #ln -sf "$DOT/vim/" "$VIM_FOLDER"
-          ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
+  VIM_FOLDER="$HOME/.vim/"
+  ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
 
 # ----------------------------- xmonad and xmobar ----------------------------
-          XMOBAR_FOLDER="$HOME/.config"
-          #test -d ~/.config || mkdir ~/.config
-          #ln -sf "$DOT/xmonad" "$XMOBAR_FOLDER/"
-          #ln -sf "$DOT/xmobar" "$XMOBAR_FOLDER/"
+  XMOBAR_FOLDER="$HOME/.config"
+  #test -d ~/.config || mkdir ~/.config
+  #ln -sf "$DOT/xmonad" "$XMOBAR_FOLDER/"
+  #ln -sf "$DOT/xmobar" "$XMOBAR_FOLDER/"
 
 # ------------------------------ x system utils ------------------------------
-          #ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
-          #ln -sf "$DOT/x/.Xresources" "$HOME/.Xresources"
+  #ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
+  #ln -sf "$DOT/x/.Xresources" "$HOME/.Xresources"
 
 # ---------------------------------- lsxhkd ----------------------------------
-          #test -d ~/.config/sxhkd || mkdir ~/.config/sxhkd
-          #ln -sf "$DOT/sxhkd/" "$HOME/.config/"
+  test -d ~/.config/sxhkd || mkdir ~/.config/sxhkd
+  ln -sf "$DOT/sxhkd/" "$HOME/.config/"
 
 # ---------------------------- ansible_completion ----------------------------
-          ansible_comp="$HOME/.local/share/ansible/"
-          test -d "$ansible_comp" || mkdir -p "$ansible_comp"
-          ln -sf "$DOT/completions/ansible-completion/" "$HOME/.local/share/ansible/ansible-completion"
+  ansible_comp="$HOME/.local/share/ansible/"
+  test -d "$ansible_comp" || mkdir -p "$ansible_comp"
+  ln -sf "$DOT/completions/ansible-completion/" "$HOME/.local/share/ansible/ansible-completion"
 
 # -------------------------------- Completions -------------------------------
 
-          comp="$HOME/.bash_completion.d/"
-          test -d "$comp" || mkdir -p "$comp"
-          ln -sf "$DOT/completions/z.sh" "$HOME/.bash_completion.d/z.sh"
-          ln -sf "$DOT/completions/fz.sh" "$HOME/.bash_completion.d/fz.sh"
+  comp="$HOME/.bash_completion.d/"
+  test -d "$comp" || mkdir -p "$comp"
+  ln -sf "$DOT/completions/z.sh" "$HOME/.bash_completion.d/z.sh"
+  ln -sf "$DOT/completions/fz.sh" "$HOME/.bash_completion.d/fz.sh"
 }
 
 
 x_install() {
-exec ./installs/install_main
+  exec ./installs/install_main
 }
 
 x_usage() {
-    local cmds="${COMMANDS[*]}"
-    printf "usage: %s (%s)\n" "${0##*/}" "${cmds// /|}"
+  local cmds="${COMMANDS[*]}"
+  printf "usage: %s (%s)\n" "${0##*/}" "${cmds// /|}"
 }
+
+
+
+x_gitconfig() {
+  #info "Configuring Git"
+
+  # The .gitconfig will be overwritten; reconfigure it.
+  echo "Configuring global .gitignore"
+  git config --global core.excludesfile ~/.gitignore_global
+
+  git config --global user.name "qwertimer"
+  git config --global user.email delltim@gmail.com
+
+  git config --global core.editor vim
+  #git config --global user.signingkey
+  git config --global merge.tool meld
+  git config --global diff.external meld
+
+}
+x_gitconfigw() {
+  info "Configuring Git for work"
+
+  # The .gitconfig will be overwritten; reconfigure it.
+  echo "Configuring global .gitignore"
+  git config --global core.excludesfile ~/.gitignore_global
+
+  git config --global user.name "tim-flux"
+  git config --global user.email tim@fluxrobotics.ai
+
+  git config --global core.editor vim
+  #git config --global user.signingkey
+  git config --global merge.tool meld
+  git config --global diff.external meld
+
+}
+
+
+
+
+
+
+
 
 
 

@@ -1,4 +1,5 @@
 #!/bin/sh
 
-curl https://bootstrap.pypa.io/get-pip.py -o $(mktemp -d)/get-pip.py
-python "$_"
+curl -O https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py
+rm -rf get-pip.py

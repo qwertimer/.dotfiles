@@ -415,3 +415,5 @@ _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansib
 	-W "$(grep "^Host" ~/.ssh/config | \
 	grep -v "[?*]" | cut -d " " -f2 | \
 	tr ' ' '\n')" scp sftp ssh
+
+PATH=/home/tim/gems/bin:/home/tim/.local/bin/scripts:/home/tim/.local/bin:/home/tim/.local/share/go/bin:/bin:/usr/local/games:/usr/local/bin:/usr/local/sbin:/usr/games:/usr/sbin:/usr/bin:/snap/bin:/sbin:/bin:/usr/local/go/bin:/usr/local/go/bin
