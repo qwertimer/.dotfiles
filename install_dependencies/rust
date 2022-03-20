@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+
+install_rust() {
+  curl https://sh.rustup.rs -sSf | sh
+}
+
+install_rust

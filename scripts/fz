@@ -1,0 +1,2889 @@
+#!/usr/bin/env python3
+###############################################################################
+##
+##  Copyright 2014-2015 Jeet Sukumaran.
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##  Based on some concepts from "quickfind"::
+##
+##      quickfind
+##      https://github.com/Refefer/quickfind
+##      By Andrew Stanton.
+##
+################################################################################
+
+"""
+A utility to find, list, filter, and act on files or directories from your
+shell, using dynamic fuzzy-matching of patterns as you type them in.
+"""
+
+# Imports {{{1
+# ==============================================================================
+import os
+import sys
+import termios
+import argparse
+import curses
+import fcntl
+import struct
+import fnmatch
+import re
+import itertools
+import collections
+import subprocess
+import textwrap
+try:
+    from StringIO import StringIO # Python 2 legacy support: StringIO in this module is the one needed (not io)
+except ImportError:
+    from io import StringIO # Python 3
+try:
+    import fsnix.util as util
+    walk = util.walk
+except ImportError:
+    walk = os.walk
+if sys.version_info.major >= 3:
+    unicode_str = lambda x: str(x)
+else:
+    unicode_str = lambda x: unicode(x, errors="ignore")
+import shlex
+import itertools
+# }}}1
+
+# Program Metadata {{{1
+# ==============================================================================
+__prog__ = os.path.basename(__file__)
+__version__ = "3.0.0"
+__description__ = __doc__
+__author__ = 'Jeet Sukumaran'
+__copyright__ = 'Copyright (C) 2015 Jeet Sukumaran.'
+# }}}1
+
+# Text Utilities {{{1
+# ==============================================================================
+def levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+
+    # len(s1) >= len(s2)
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = xrange(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1 # j+1 instead of j since previous_row and current_row are one character longer
+            deletions = current_row[j] + 1       # than s2
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+def truncate_front(line, length=70, truncation_str="<"):
+    reduce_amt = len(line) - length
+    # If it already fits
+    if reduce_amt <= 0 or length <= 0:
+        return line
+    reduce_amt += len(truncation_str) # for the ellipsis
+    return truncation_str+line[reduce_amt:]
+
+def truncate_middle(line, length=70, truncation_str="..."):
+    reduce_amt = len(line) - length
+    # If it already fits
+    if reduce_amt <= 0 or length <= 0:
+        return line
+    reduce_amt += len(truncation_str) # for the ellipsis
+    start = int(len(line) / 2) - int(reduce_amt / 2)
+    if start < 0:
+        start = 0
+    end = start + reduce_amt
+    return "{}{}{}".format(line[:start], truncation_str, line[end:])
+# }}}1
+
+# CURSES {{{1
+# ==============================================================================
+
+class Subscreen(object): # {{{2
+
+    def redirect_standard_channels(self):
+        # clone stdout and stderr: this allows us to open the curses window in
+        # a subshell and print the result to the "real" stdout on exit
+
+        # standard output
+        self.prev_stdout_fd = os.dup(sys.stdout.fileno())
+        self.new_stdout_clone = os.open("/dev/tty", os.O_WRONLY)
+        os.dup2(self.new_stdout_clone, sys.stdout.fileno())
+        self.prev_stdout = sys.stdout
+
+        # standard error
+        self.prev_stderr_fd = os.dup(sys.stderr.fileno())
+        self.new_stderr_clone = os.open("/dev/tty", os.O_WRONLY)
+        os.dup2(self.new_stderr_clone, sys.stderr.fileno())
+        self.prev_stderr = sys.stderr
+
+    def restore_standard_channels(self):
+        # restore standard output and standard error
+
+        # standard error
+        os.dup2(self.prev_stderr_fd, self.prev_stderr.fileno())
+        sys.stderr = self.prev_stderr
+
+        # standard output
+        os.dup2(self.prev_stdout_fd, self.prev_stdout.fileno())
+        sys.stdout = self.prev_stdout
+
+    def start_stdscr(self):
+        # initialize screen
+        self.stdscr = curses.initscr()
+        curses.noecho()
+        curses.raw()
+        # self.stdscr.keypad(1)
+        try:
+            curses.start_color()
+        except:
+            pass
+        self.cursor_setting = None
+        try:
+            self.cursor_setting = curses.curs_set(0)
+        except:
+            pass
+
+    def stop_stdscr(self):
+        # restore terminal
+        # self.stdscr.keypad(0)
+        if self.cursor_setting is not None:
+            try:
+                curses.curs_set(self.cursor_setting)
+            except:
+                pass
+        try:
+            curses.echo()
+        except curses.error:
+            pass
+        try:
+            curses.noraw()
+        except curses.error:
+            pass
+        try:
+            curses.endwin()
+        except curses.error:
+            pass
+
+    def __enter__(self):
+        self.redirect_standard_channels()
+        self.start_stdscr()
+        # return self.stdscr
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop_stdscr()
+        self.restore_standard_channels()
+
+# }}}2
+
+class VisualInterface(object): # {{{2
+
+    @staticmethod
+    def get_console_dimensions():
+        env = os.environ
+        def ioctl_GWINSZ(fd):
+            try:
+                cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+            except:
+                return
+            return cr
+        return ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2) or (25, 80)
+
+    @staticmethod
+    def stop():
+        curses.echo()
+        curses.endwin()
+
+    # key codes {{{3
+    class KeyCode(object):
+        def __init__(self, name, is_special=False):
+            self.name = name
+            self.is_special = is_special
+        def __str__(self):
+            return self.name
+    KEYCODES = collections.OrderedDict()
+    KEYCODES[0] = KeyCode(name="NUL", is_special=True)
+    for idx, c in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+        KEYCODES[idx+1] = KeyCode(name="CTRL-{}".format(c), is_special=True)
+    KEYCODES[27] = KeyCode(name="ESC", is_special=True)
+    KEYCODES[28] = KeyCode(name="FS", is_special=True)
+    for idx in range(32, 127):
+        KEYCODES[idx] = KeyCode(name=chr(idx), is_special=False)
+    KEYCODES[127] = KeyCode(name="DEL", is_special=True)
+    KEYCODES[-65] = KeyCode(name="UP", is_special=True)
+    KEYCODES[-66] = KeyCode(name="DOWN", is_special=True)
+    KEYCODES[-67] = KeyCode(name="RIGHT", is_special=True)
+    KEYCODES[-68] = KeyCode(name="LEFT", is_special=True)
+    KEYCODES[-80] = KeyCode(name="F1", is_special=True)
+    KEYCODES[-81] = KeyCode(name="F2", is_special=True)
+    KEYCODES[-1001] = KeyCode(name="EVENT-RESIZE", is_special=True)
+
+    CANCEL_KEYCODES_NAMES = set(["ESC", "FS", "CTRL-C"])
+    # }}}3
+
+    ### Life-cycle
+
+    def __init__(self, stdscr, default_input_window=None):
+        self.stdscr = stdscr
+        if default_input_window is None:
+            self.default_input_window = self.stdscr
+        else:
+            self.default_input_window = default_input_window
+        self.init_colors()
+
+    ### Window Management
+
+    def init_colors(self):
+        curses.use_default_colors()
+
+        curses.init_pair(1, -1, -1)
+        self.default_color = curses.color_pair(1)
+
+        curses.init_pair(2, curses.COLOR_GREEN, -1)
+        self.match_color = curses.color_pair(2) | curses.A_UNDERLINE
+
+        curses.init_pair(3, curses.COLOR_CYAN, -1)
+        self.is_selected_color = curses.color_pair(3) | curses.A_BOLD
+
+        curses.init_pair(4, -1, -1)
+        self.current_row_color = curses.color_pair(4) # note: will be reversed below
+
+        curses.init_pair(5, curses.COLOR_MAGENTA, -1)
+        self.prompt_color = curses.color_pair(5) | curses.A_BOLD
+
+        curses.init_pair(6, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        self.status_bar_color = curses.color_pair(6) | curses.A_BOLD | curses.A_REVERSE
+
+        curses.init_pair(7, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        self.spinner_color = curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE
+
+        curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_RED)
+        self.error_color = curses.color_pair(8) | curses.A_BOLD
+
+        curses.init_pair(9, curses.COLOR_BLUE, curses.COLOR_WHITE)
+        self.help_color = curses.color_pair(9) | curses.A_BOLD | curses.A_REVERSE
+
+    def restart(self):
+        self.refresh()
+
+    def abort(self, exit_arg):
+        self.stop()
+        sys.exit(exit_arg)
+
+    def screen_dimensions(self):
+        return self.stdscr.getmaxyx()
+
+    def set_cursor(self, value):
+        if value is None:
+            return
+        try:
+            return curses.curs_set(value)
+        except:
+            pass
+
+    def fill(self, window, color=None):
+        window.erase()
+        height, width = window.getmaxyx()
+        if color is None:
+            color = 0
+        # window.erase()
+        blank_line = " " * (width)
+        for row_idx in range(height):
+            # if row_idx == height - 1:
+            #     # weird curses bug:
+            #     #   http://stackoverflow.com/questions/7063128/last-character-of-a-window-in-python-curses0
+            #     #   "writing the last character of a window is impossible with curses, for historical reasons."
+            #     window.addstr(row_idx, 0, blank_line[:-1], color)
+            # else:
+            #     window.addstr(row_idx, 0, blank_line, color)
+
+            # weird curses bug:
+            #   http://stackoverflow.com/questions/7063128/last-character-of-a-window-in-python-curses0
+            #   "writing the last character of a window is impossible with curses, for historical reasons."
+            #   But it turns out that you can trap and ignore the error
+            try:
+                window.addstr(row_idx, 0, blank_line, color)
+            except curses.error:
+                pass
+
+    ### Input
+
+    def getch(self, blocking=None, echo=None, focal_window=None):
+        # set state
+        if focal_window is None:
+            focal_window = self.default_input_window
+        if blocking:
+            focal_window.nodelay(0)
+        else:
+            focal_window.nodelay(1)
+        if echo is False:
+            curses.noecho()
+        elif echo is True:
+            curses.echo()
+        ch = focal_window.getch()
+        ### FOLLOWING HACK NOT NEEDED ANY MORE, DUE TO FOLLOWING APPROACH::
+        ###
+        ###    with os.fdopen(0, 'r') as src:
+        ###       for item in src.read().split("\n"):
+        ###            # do stuff!
+        ###    sys.stdin = open("/dev/tty", "r")
+        ###
+        # if blocking and ch == -1:
+        #     # We are here because files were read from standard input
+        #     # and now input is unavailable. This hack works on POSIX
+        #     # systems ... but ARROW keys lead to exit in the loop
+        #     # because we checking for escape (by itself) in a non-blocking
+        #     # way.
+        #     import tty
+        #     fd = sys.stdin.fileno()
+        #     tty_mode = tty.tcgetattr(fd)
+        #     tty.setcbreak(fd)
+        #     try:
+        #         ch = ord(os.read(fd, 1))
+        #     finally:
+        #         tty.tcsetattr(fd, tty.TCSAFLUSH, tty_mode)
+        #     assert isinstance(ch, int)
+
+        # restore state
+        if blocking:
+            focal_window.nodelay(1)
+        if echo:
+            curses.noecho()
+        return ch
+
+    def get_keycode(self, blocking=True, echo=False, focal_window=None):
+        ch_value = self.getch(blocking=blocking, echo=echo, focal_window=focal_window)
+        if ch_value == -1:
+            return None
+        elif ch_value == curses.KEY_RESIZE:
+            return self.KEYCODES[-1001]
+        elif ch_value == 27:
+            # Escape: could be just Escape, could be Ansi escape for
+            # arrows
+            # just escape? try non-blocking read to see if
+            # any other characters
+            ch_value = self.getch(blocking=False, echo=echo, focal_window=focal_window)
+            if ch_value == -1:
+                # Nope: just escape
+                return self.KEYCODES[27]
+            # other characters available
+            # assuming arrow-key, we discard
+            # the current and read the next
+            ch_value = self.getch(blocking=True, echo=echo, focal_window=focal_window)
+            return self.KEYCODES.get(-ch_value, None) # None if not handled
+        else:
+            return self.KEYCODES.get(ch_value, None)
+
+    def pause_for_keypress(self):
+        cursor = self.set_cursor(2)
+        ch = self.getch(blocking=True)
+        while ch != -1:
+            ch = self.getch(blocking=False)
+        self.set_cursor(cursor)
+        return ch
+
+    def check_for_cancel(self):
+        keycode = self.get_keycode(blocking=False, echo=False)
+        if keycode is not None and keycode.name in self.CANCEL_KEYCODES_NAMES:
+            return True
+        return False
+
+    def input_keycode(self, focal_window=None, echo=None, pos_y=None, pos_x=None):
+        if focal_window is None:
+            focal_window = self.default_input_window
+        if pos_y is not None and pos_x is not None:
+            try:
+                focal_window.move(pos_y, pos_x)
+            except curses.error:
+                pass
+        cursor = self.set_cursor(2)
+        keycode = self.get_keycode(blocking=True, echo=echo, focal_window=focal_window)
+        cursor = self.set_cursor(cursor)
+        return keycode
+
+# }}}2
+
+class Display(VisualInterface): # {{{2
+
+    # class variables {{{3
+    FIRST_ITEM_ROW_OFFSET = 3
+    STATUS_BAR_OFFSET     = 2
+    QUERY_ROW_OFFSET      = 1
+    QUERY_WINDOW_HEIGHT    = 2
+    # }}}3
+
+    class OutOfWindowBoundsException(Exception):
+        pass
+
+    ### Life-cycle
+
+    def __init__(
+            self,
+            stdscr,
+            is_not_filesystem_path_entries=False):
+        VisualInterface.__init__(self, stdscr=stdscr)
+        self.content_buffer = None
+        self.content_vscroll_offset = 0
+        self.query_string = None
+        self.query_length = 0
+        self.content_buffer_item_capacity = 0
+        self.content_items = None
+        self.focal_item_index = 0
+        self.whole_path_matching = None
+        self.match_type = None
+        self.display_absolute_paths = False
+        self.display_split_filename_and_dirname = False
+        self.max_filename_len = 0
+        self.match_type_prompts = {
+                "fuzzy":   "? ",
+                "literal": "= ",
+                "regexp": "% ",
+        }
+        self.content_buffer_allocation_failure_extended_message = False
+        self.is_not_filesystem_path_entries = is_not_filesystem_path_entries
+        self.start()
+
+    def start(self):
+        screen_height, screen_width = self.screen_dimensions()
+        if screen_height < 5 or screen_width <10:
+            self.abort("Insufficient room for interface")
+        cv_height, cv_width = self.content_buffer_available_display_dimensions()
+        nrows = cv_height + 1
+        self.new_content_buffer(nrows, fill=True)
+        self.status_bar_window = StatusBarMessageWindow(stdscr=self.stdscr, color=self.status_bar_color)
+        self.query_window = curses.newwin(1, cv_width, screen_height-1, 0)
+        self.default_input_window = self.query_window
+
+    ### Window Management
+
+    def new_content_buffer(self, nrows, fill=True):
+        try:
+            self.content_buffer = curses.newpad(nrows, self.screen_dimensions()[1])
+            self.content_buffer_item_capacity = nrows
+        except curses.error:
+            self.content_buffer = curses.newpad(1, self.screen_dimensions()[1])
+            self.resize_content_buffer(nrows)
+        if fill:
+            self.fill_content_buffer()
+        return self.content_buffer
+
+    def content_buffer_allocation_failure(self, nrows):
+        self.abort(
+                ("Content buffer allocation failure with {} items. Limit\n"
+                "the number of items using the '--item-limit' option or by\n"
+                "breaking up search into smaller subdirectories.".format(nrows)))
+
+    def num_content_buffer_items(self):
+        try:
+            return min(len(self.content_items), self.content_buffer_item_capacity)
+        except TypeError:
+            return 0
+
+    def query_window_dimensions(self):
+        return self.query_window.getmaxyx()
+
+    def content_buffer_dimensions(self):
+        return self.content_buffer.getmaxyx()
+
+    def content_buffer_available_display_dimensions(self):
+        screen_height, screen_width = self.screen_dimensions()
+        return screen_height - self.QUERY_WINDOW_HEIGHT - 1, screen_width
+
+    def resize_content_buffer(self, nrows, fill=True):
+        factor = 1.0
+        self.content_buffer_item_capacity = 0
+
+        while True and factor > 0:
+            target_nrows = int(factor * nrows)
+            self.content_buffer.resize(target_nrows, self.screen_dimensions()[1])
+            h, w = self.content_buffer.getmaxyx()
+            if h == target_nrows:
+                self.content_buffer_item_capacity = h
+                break
+            factor = factor - 0.05
+
+        if not self.content_buffer_item_capacity:
+            self.content_buffer.erase()
+        elif fill:
+            self.fill_content_buffer()
+
+    def fill_content_buffer(self):
+        self.fill(self.content_buffer)
+
+    ### Rendering (Framework)
+
+    def message(self, message_lines, color=None, vpadding=0, hpadding=2):
+
+        ### FOR DEBUGGING ###
+        # message_lines = []
+        # for y in range(300):
+        #     row = []
+        #     for x in range(100):
+        #         row.append("<y{},x{}>".format(y, x))
+        #     row = "|".join(row)
+        #     message_lines.append("0]" + row + "[$")
+        ### FOR DEBUGGING ###
+
+        available_height, available_width = self.content_buffer_available_display_dimensions()
+        message_window = MessageWindow(
+                stdscr=self.stdscr,
+                message_lines=message_lines,
+                available_height=available_height,
+                available_width=available_width,
+                color=color,
+                vpadding=vpadding,
+                hpadding=hpadding,
+                )
+        key_code = message_window.show()
+        ## not needed any more?
+        # message_window.teardown()
+        # self.refresh() # refresh needs to be called after teardow key_code
+
+    def error(self, message):
+        if isinstance(message, str):
+            message_lines = message.split("\n")
+        else:
+            message_lines = message
+        keycode = self.message(
+                message_lines=message_lines,
+                color=self.error_color,
+                vpadding=1,
+                hpadding=2,
+                )
+        return keycode
+
+    def status_bar_message(self, message, color=None, blocking=True):
+        if color is None:
+            color = self.status_bar_color
+        esb = StatusBarMessageWindow(stdscr=self.stdscr, color=color)
+        esb.write(message)
+        if blocking:
+            keycode = self.pause_for_keypress()
+            esb = None
+            self.status_bar_window.refresh()
+        return esb
+
+    def status_bar_error_message(self, message, blocking=True):
+        return self.status_bar_message(
+                message=message,
+                color=self.error_color,
+                blocking=blocking,
+                )
+
+    ### Rendering (Content)
+
+    def write_all(self,
+            items,
+            focal_item_index,
+            query_str,
+            match_type=None,
+            whole_path_matching=None,
+            display_absolute_paths=None,
+            display_split_filename_and_dirname=None,
+            search_path_info=None,
+            ):
+        if match_type is not None:
+            self.match_type = match_type
+        if whole_path_matching is not None:
+            self.whole_path_matching = whole_path_matching
+        self.write_content_items(
+                items,
+                focal_item_index,
+                display_absolute_paths=display_absolute_paths,
+                display_split_filename_and_dirname=display_split_filename_and_dirname,
+                )
+        self.write_status_bar(search_path_info=search_path_info)
+        self.write_query(query_str=query_str)
+        self.focal_item_index = focal_item_index
+        self.refresh()
+
+    def write_content_items(self,
+            items,
+            focal_item_index,
+            display_absolute_paths=None,
+            display_split_filename_and_dirname=None,
+            ):
+        if display_absolute_paths is not None:
+            self.display_absolute_paths = display_absolute_paths
+        if display_split_filename_and_dirname is not None and display_split_filename_and_dirname is not self.display_split_filename_and_dirname:
+            self.display_split_filename_and_dirname = display_split_filename_and_dirname
+        self.content_buffer.erase()
+        self.content_items = items
+        if self.content_items:
+            if len(self.content_items) > self.content_buffer_dimensions()[0]:
+                self.resize_content_buffer(len(self.content_items))
+            height, width = self.content_buffer_dimensions()
+            if self.display_split_filename_and_dirname:
+                to_process = self.content_items[:self.num_content_buffer_items()]
+                self.max_filename_len = max(len(item.filename) for item in to_process)
+                remaining_len = width - self.max_filename_len - 5
+                for item in to_process:
+                    if self.display_absolute_paths:
+                        dirname = os.path.abspath(item.dirname)
+                    else:
+                        dirname = item.dirname
+                    item.split_display_name = "{} {}".format(
+                            item.filename.ljust(self.max_filename_len, " "),
+                            truncate_middle(dirname, remaining_len).ljust(remaining_len))[:width]
+            for current_idx, item in enumerate(self.content_items):
+                if current_idx >= self.content_buffer_item_capacity:
+                    break
+                try:
+                    self.write_content_item(current_idx,
+                            item,
+                            current_idx==focal_item_index,
+                            height=height,
+                            width=width,
+                            )
+                except Display.OutOfWindowBoundsException:
+                    break
+        return self.content_items
+
+    def write_content_item(self,
+            item_index,
+            item,
+            is_focal_item,
+            height=None,
+            width=None,
+            ):
+        if height is None or width is None:
+            height, width = self.content_buffer_dimensions()
+        row = height - item_index - 1
+        if row < 0:
+            raise Display.OutOfWindowBoundsException
+        if self.display_split_filename_and_dirname:
+            display_name = item.split_display_name
+        else:
+            if self.is_not_filesystem_path_entries:
+                display_name = item.raw_name
+            elif self.display_absolute_paths:
+                display_name = os.path.abspath(item.filepath)
+            else:
+                display_name = item.display_name
+            # self.content_buffer.move(row, 0)
+            # self.content_buffer.clrtoeol()
+            # -4: account for leader, and avoid writing at last position
+            display_name = truncate_middle(display_name, width-3).ljust(width-3)
+        weight = curses.A_NORMAL
+        color = self.default_color
+        if item.is_selected:
+            self.content_buffer.addstr(row, 0, "#", self.is_selected_color | curses.A_BOLD)
+            color = self.is_selected_color
+        else:
+            self.content_buffer.addstr(row, 0, " ", self.default_color)
+        if is_focal_item:
+            self.content_buffer.addstr(row, 1, "> ", self.default_color)
+            color = self.current_row_color
+            # to reverse all parts of the line (included matched)
+            weight = curses.A_REVERSE | curses.A_BOLD
+        else:
+            self.content_buffer.addstr(row, 1, "  ", self.default_color)
+        try:
+            if item.score > 0:
+                if self.display_split_filename_and_dirname:
+                    if self.whole_path_matching:
+                        left = display_name
+                        main = ""
+                        right = ""
+                    else:
+                        left = display_name[:item.match_start_offset]
+                        main = display_name[item.match_start_offset:item.match_end_offset]
+                        right = display_name[item.match_end_offset:]
+                else:
+                    left = display_name[:item.match_start]
+                    main = display_name[item.match_start:item.match_end]
+                    right = display_name[item.match_end:]
+                self.content_buffer.addstr(row, 3, left, color | weight)
+                self.content_buffer.addstr(row, 3 + len(left), main, self.match_color | weight)
+                self.content_buffer.addstr(row, 3 + len(left) + len(main), right, color | weight)
+            else:
+                self.content_buffer.addstr(row, 3, display_name, color | weight)
+        except curses.error:
+            pass
+
+    def write_status_bar(self,
+            search_path_info=None,
+            whole_path_matching=None,
+            match_type=None,
+            ):
+        if match_type is not None:
+            self.match_type = match_type
+        if whole_path_matching is not None:
+            self.whole_path_matching = whole_path_matching
+        height, width = self.status_bar_window.dimensions()
+        status_bar_components = []
+        if self.match_type == "fuzzy":
+            status_bar_components.append("[^E] expression: fuzzy  ")
+        elif self.match_type == "literal":
+            status_bar_components.append("[^E] expression: literal")
+        elif self.match_type == "regexp":
+            status_bar_components.append("[^E] expression: regular")
+        if self.whole_path_matching:
+            status_bar_components.append("[^W] match: whole path")
+        else:
+            status_bar_components.append("[^W] match: basename")
+        status_bar = " ".join(status_bar_components)
+        if search_path_info is None:
+            search_path_info = ""
+        if search_path_info:
+            remaining = width - len(status_bar) - 1
+            if remaining > 0:
+                status_bar += (("({})".format(truncate_front(search_path_info, remaining))).rjust(remaining))
+        status_bar = status_bar.ljust(width)[:width]
+        self.status_bar_window.write(status_bar)
+
+    def write_query(self, query_str):
+        height, width = self.query_window_dimensions()
+        self.query_str = query_str
+        prompt = self.match_type_prompts[self.match_type]
+        q = (prompt + self.query_str)[:width] # probably makes more sense to truncate front of query?
+        self.query_length = len(q)
+        try:
+            self.query_window.addstr(0, 0, q.ljust(width), self.prompt_color)
+        except curses.error:
+            #   http://stackoverflow.com/questions/7063128/last-character-of-a-window-in-python-curses0
+            #   "writing the last character of a window is impossible with curses, for historical reasons."
+            pass
+
+    ### Displaying
+
+    def clear(self):
+        self.query_window.erase()
+        self.content_buffer.erase()
+
+    def clear_content(self):
+        self.content_buffer.erase()
+
+    def refresh(self):
+        num_content_items = self.num_content_buffer_items()
+        try:
+            screen_height, screen_width = self.screen_dimensions()
+            content_height, content_width = self.content_buffer_dimensions()
+            if content_height < 0:
+                if self.content_buffer_allocation_failure_extended_message:
+                    self.error((
+                        "Content buffer allocation failure: {} entries. ".format(num_content_items),
+                        "",
+                        "Search is still available and active, but entries will not",
+                        "be displayed until a buffer can be created. Begin typing a",
+                        "query to filter items until the number of items is ",
+                        "sufficiently reduced to allow for display.",
+                        "",
+                        "Alternatively, you can rerun FuzzySnake using more focused",
+                        "search conditions.",
+                        "",
+                        "                          [OK]                            ",
+                        ))
+                    self.content_buffer_allocation_failure_extended_message = False
+                self.status_bar_message(
+                        "{} items (filter using query to reduce number to display)".format(len(self.content_items)),
+                        blocking=False,
+                        color=self.error_color,
+                        )
+                self.content_buffer.erase()
+                self.resize_content_buffer(screen_height)
+                # self.content_buffer_allocation_failure(num_content_items)
+            self.status_bar_window.refresh()
+            self.query_window.noutrefresh()
+            if not num_content_items:
+                self.content_buffer.noutrefresh(
+                        0,
+                        0,
+                        0,
+                        0,
+                        screen_height-self.QUERY_WINDOW_HEIGHT - 1,
+                        screen_width,
+                        )
+            else:
+                available_height = self.content_buffer_available_display_dimensions()[0]
+                if num_content_items < available_height:
+                    # screen_top = screen_height - num_content_items - (self.QUERY_WINDOW_HEIGHT)
+                    # content_top = content_height - num_content_items
+                    screen_top = 0 # to ensure it gets cleaned if the number of items is reduced
+                    blank_line = " " * (screen_width)
+                    for idx in range(num_content_items+1, available_height+1):
+                        assert content_height - idx >= 0
+                        self.content_buffer.addstr(content_height-idx, 0, blank_line, self.default_color)
+                    content_top = content_height - available_height - 1
+                else:
+                    screen_top = 0
+                    half_available_height = int(available_height / 2)
+                    if self.focal_item_index < half_available_height:
+                        # bottom
+                        content_top = content_height - available_height - 1
+                    elif self.focal_item_index + half_available_height >= num_content_items:
+                        # top
+                        content_top = content_height - num_content_items
+                    else:
+                        # middle
+                        current_item_row = content_height - self.focal_item_index
+                        content_top = current_item_row - half_available_height - 1
+                self.content_buffer.noutrefresh(
+                        content_top,
+                        0,
+                        screen_top,
+                        0,
+                        screen_height-self.QUERY_WINDOW_HEIGHT - 1,
+                        screen_width,
+                        )
+            curses.doupdate()
+        except Exception as e:
+            raise
+            # pass
+
+    ### Content Interaction
+
+    def get_query_keycode(self, echo=False, focal_window=None):
+        return self.input_keycode(
+                focal_window=self.query_window,
+                echo=echo,
+                pos_y=0,
+                pos_x=self.query_length
+                )
+
+    def update_focal_item(self, current_focal_item_index, new_focal_item_index):
+        if new_focal_item_index != current_focal_item_index:
+            self.write_content_item(current_focal_item_index, self.content_items[current_focal_item_index], False)
+            self.write_content_item(new_focal_item_index, self.content_items[new_focal_item_index], True)
+            self.focal_item_index = new_focal_item_index
+            self.refresh()
+
+    def move_focus_to_next(self, focal_item_index, count=1):
+        # Since we display from the bottom up, moving 'down' or 'next' means
+        # moving to a *higher*-scoring result, which requires *decrement* the
+        # index to move *up* the list, which is sorted incrementally by score.
+        new_item_index = max(0, focal_item_index - count)
+        self.update_focal_item(focal_item_index, new_item_index)
+        return new_item_index
+
+    def move_focus_to_previous(self, focal_item_index, count=1):
+        # Since we display from the bottom up, moving 'up' or 'previous' means
+        # moving to a *lower*-ring result, which requires *incrementing* the
+        # index to move *down* the list, which is sorted incrementally by score.
+        new_item_index = min(self.num_content_buffer_items()-1, focal_item_index + count)
+        # new_item_index = focal_item_index + 1
+        if new_item_index < 0:
+            new_item_index = 0
+        self.update_focal_item(focal_item_index, new_item_index)
+        return new_item_index
+
+    def page_down(self, focal_item_index):
+        available_height = self.content_buffer_available_display_dimensions()[0]
+        return self.move_focus_to_next(focal_item_index, available_height)
+
+    def page_up(self, focal_item_index):
+        available_height = self.content_buffer_available_display_dimensions()[0]
+        return self.move_focus_to_previous(focal_item_index, available_height)
+
+    ### Special
+
+    def get_progress_ticker(self):
+        return ProgressTicker(stdscr=self.stdscr, color=self.spinner_color)
+
+# }}}2
+
+class StatusBarMessageWindow(VisualInterface): # {{{2
+    STATUS_BAR_OFFSET = 2
+    def __init__(self, stdscr, color=0):
+        VisualInterface.__init__(self, stdscr=stdscr)
+        self.color = color
+        self.setup()
+
+    def setup(self):
+        screen_height, screen_width = self.screen_dimensions()
+        self._window = curses.newwin(1, screen_width, screen_height-Display.STATUS_BAR_OFFSET, 0)
+
+    def dimensions(self):
+        return self._window.getmaxyx()
+
+    def write(self, message):
+        height, width = self.dimensions()
+        message = message.ljust(width)[:width]
+        try:
+            self._window.addstr(0, 0, message, self.color)
+        except curses.error:
+            pass
+        self._window.refresh()
+
+    def refresh(self, delayed=False):
+        if delayed:
+            self._window.noutrefresh()
+        else:
+            self._window.refresh()
+
+# }}}2
+
+class ProgressTicker(StatusBarMessageWindow): # {{{2
+
+    def __init__(self, stdscr, color):
+        StatusBarMessageWindow.__init__(self, stdscr=stdscr, color=color)
+        self.current_step = 0
+        self.spinner_cycle = itertools.cycle(["|", "/", "-", "\\", "-",])
+
+    def update(self, message):
+        self.current_step += 1
+        s0 = next(self.spinner_cycle) + " " + message
+        self.write(s0)
+# }}}2
+
+class MessageWindow(VisualInterface): # {{{2
+    def __init__(self,
+            stdscr,
+            message_lines,
+            available_height,
+            available_width,
+            color=None,
+            vpadding=0,
+            hpadding=2,
+            vmargin=0,
+            hmargin=0,
+            ):
+        VisualInterface.__init__(self, stdscr=stdscr)
+        self.message_lines = message_lines
+        self.available_height = available_height
+        self.available_width = available_width
+        self.color = color
+        if self.color is None:
+            self.color = 0
+        self.vpadding = vpadding
+        self.hpadding = hpadding
+        self.vmargin = vmargin
+        self.hmargin = hmargin
+        self.message_buffer = None
+        self.available_height_start = 0 # height from top of screen that available height begins
+        self.available_width_start = 0  # width from left of screen that available wdith begins
+        # self.setup()
+
+    def __del__(self):
+        self.teardown()
+
+    def setup(self):
+        if self.message_buffer is not None:
+            self.teardown()
+
+        # self.available_height -= (self.vpadding * 2)
+        # self.available_width -= (self.hpadding * 2)
+
+        max_rows = len(self.message_lines) + (self.vpadding * 2)
+        max_cols = max(len(r) for r in self.message_lines)
+        max_cols += (self.hpadding * 2)
+        actual_available_height = self.available_height - (self.vmargin*2)
+        actual_available_width = self.available_width - (self.hmargin*2)
+        self.view_height = min(max_rows, actual_available_height)
+        self.view_width = min(max_cols, actual_available_width)
+        self.view_pos_top = max(0, int((actual_available_height-self.view_height)/2)+self.available_height_start)
+        self.view_pos_left = max(0, int((actual_available_width-self.view_width)/2)+self.available_width_start)
+        self.view_y, self.view_x = 0, 0
+        self.message_buffer_height = max_rows
+        self.message_buffer_width = max_cols
+        self.message_buffer = curses.newpad(self.message_buffer_height, self.message_buffer_width)
+        self.default_input_window = self.message_buffer
+        # self.fill(color=self.color)
+
+    def render(self):
+        if self.message_buffer is None:
+            self.setup()
+        self.write_lines()
+        self.refresh()
+
+    def teardown(self):
+        if self.message_buffer is not None:
+            self.message_buffer.erase()
+            self.refresh()
+            self.message_buffer = None
+            self.default_input_window = None
+
+    def fill(self, color=None):
+        if self.message_buffer is None:
+            self.setup()
+        if color is None:
+            color = self.color
+        VisualInterface.fill(self, window=self.message_buffer, color=color)
+
+    def write_lines(self):
+        # self.message_buffer.erase()
+        self.fill(color=self.color)
+        hpadding = " " * self.hpadding
+        for line_idx, line in enumerate(self.message_lines):
+            row_idx = line_idx + self.vpadding
+            try:
+                self.message_buffer.addstr(
+                        row_idx,
+                        0,
+                        hpadding,
+                        self.color,
+                        )
+                self.message_buffer.addstr(
+                        row_idx,
+                        self.hpadding,
+                        line.ljust(self.message_buffer_width-self.hpadding)[:self.message_buffer_width-self.hpadding],
+                        self.color,
+                        )
+            except curses.error:
+                pass
+
+    def refresh(self):
+        self.message_buffer.refresh(
+                self.view_y,
+                self.view_x,
+                self.view_pos_top,
+                self.view_pos_left,
+                self.view_pos_top + self.view_height,
+                self.view_pos_left + self.view_width-1,
+                )
+
+    def show(self, action="any-key"):
+        if self.message_buffer is None:
+            self.render()
+        while True:
+            keycode = self.get_keycode(blocking=True, echo=False, focal_window=self.message_buffer)
+            if False:
+                # to allow easy re-ordering of cases
+                pass
+            elif keycode.name == "UP" or keycode.name == "k":
+                self.view_y -= 1
+                if self.view_y < 0:
+                    self.view_y = 0
+            elif keycode.name == "DOWN" or keycode.name == "j":
+                if self.view_y + self.view_height < self.message_buffer_height - 1:
+                    self.view_y += 1
+            elif keycode.name == "g":
+                self.view_y = 0
+            elif keycode.name == "G":
+                self.view_y = self.message_buffer_height - self.view_height - 1
+            elif keycode.name == "CTRL-B":
+                self.view_y -= self.view_height
+                if self.view_y < 0:
+                    self.view_y = 0
+            elif keycode.name == "CTRL-F":
+                self.view_y += self.view_height
+                if self.view_y + self.view_height >= self.message_buffer_height - 2:
+                    self.view_y = self.message_buffer_height - self.view_height - 1
+            elif keycode.name == "LEFT" or keycode.name == "h":
+                self.view_x -= 1
+                if self.view_x < 0:
+                    self.view_x = 0
+            elif keycode.name == "RIGHT" or keycode.name == "l":
+                if self.view_x + self.view_width < self.message_buffer_width:
+                    self.view_x += 1
+            elif keycode.name == "0":
+                self.view_x = 0
+            elif keycode.name == "$":
+                self.view_x = self.message_buffer_width - self.view_width
+            elif action == "any-key":
+                return keycode
+            elif keycode is None:
+                continue
+            elif (action == "ok" or action == "ok-cancel") and (keycode.name == "CTRL-J" or keycode.name == "CTRL-M" or keycode.name in self.CANCEL_KEYCODES_NAMES):
+                return keycode
+            elif keycode.name in self.CANCEL_KEYCODES_NAMES:
+                return keycode
+            self.refresh()
+# }}}2
+
+
+# }}}1
+
+# Debugging {{{1
+# ==============================================================================
+def dump_stack(out=None):
+    import inspect
+    if out is None:
+        out = sys.stderr
+    for frame, filename, line_num, func, source_code, source_index in inspect.stack()[2:]:
+        if source_code is None:
+            out.write("{}: {}\n".format(filename, line_num))
+        else:
+            out.write("{}: {}: {}\n".format(filename, line_num, source_code[source_index].strip()))
+# }}}1
+
+# External Command and Event Handling {{{1
+# ==============================================================================
+
+def compose_command(cmd,
+        args=None,
+        substitute_token="{}"):
+    cmd = shlex.split(cmd)
+    if args is not None:
+        substitution_made = False
+        prev_idx = 0
+        expanded_cmd = []
+        for idx, token in enumerate(cmd):
+            if token == substitute_token:
+                expanded_cmd.extend(cmd[prev_idx:idx])
+                expanded_cmd.extend(args)
+                prev_idx = idx + 1
+                substitution_made = True
+        if not substitution_made:
+            cmd.extend(args)
+        else:
+            cmd = expanded_cmd + cmd[prev_idx:]
+    return cmd
+
+def execute_command(cmd,
+        args=None,
+        substitute_token="{}",
+        verbose=True,
+        as_subprocess=False):
+    cmd = compose_command(
+            cmd=cmd,
+            args=args,
+            substitute_token=substitute_token)
+    if verbose:
+        sys.stderr.write("{}\n".format(" ".join(cmd)))
+    try:
+        if not as_subprocess:
+            # Note: cannot use subprocess here due to parent process (this program)
+            # needing to exit before the subprocess is possibly done. `os.exec` and
+            # its kin work: independent processed is spawned and the current
+            # process is replaced by it.
+            os.execvp(cmd[0], cmd)
+        else:
+            p = subprocess.Popen(cmd)
+            p.communicate()
+    except OSError as e:
+        e.command_tokens = cmd
+        raise e
+
+# }}}1
+
+# Data Model {{{1
+# ==============================================================================
+
+class Entry(object):
+
+    def __init__(self,
+            dirname,
+            filename,
+            score,
+            match_start,
+            match_end,
+            whole_path_matching,
+            is_selected=False):
+        self._dirname = os.path.normpath(dirname)
+        self._filename = os.path.normpath(filename)
+        # self.dirname = dirname
+        # self.filename = filename
+        self.score = score
+        self.whole_path_matching = whole_path_matching
+        self._match_start_offset = match_start
+        self._match_end_offset = match_end
+        self.is_selected = is_selected
+
+    def clear_metadata(self):
+        self.score = 0
+        self.match_start = 0
+        self.match_end = 0
+        self.is_selected = False
+
+    def _get_match_target(self):
+        if self.whole_path_matching:
+            return self.filepath
+        else:
+            return self.filename
+    match_target = property(_get_match_target)
+
+    def _get_display_name(self):
+        return self.filepath
+    display_name = property(_get_display_name)
+
+    def _get_dirname(self):
+        return self._dirname
+    def _set_dirname(self, name):
+        if name:
+            self._dirname = os.path.normpath(name)
+        else:
+            self._dirname = ""
+    dirname = property(_get_dirname, _set_dirname)
+
+    def _get_filename(self):
+        return self._filename
+    def _set_filename(self, name):
+        if name:
+            self._filename = os.path.normpath(name)
+        else:
+            self._filename = ""
+    filename = property(_get_filename, _set_filename)
+
+    def _get_raw_name(self):
+        return self._filename
+    raw_name = property(_get_raw_name)
+
+    def _get_filepath(self):
+        return os.path.normpath(os.path.join(self._dirname, self._filename))
+    filepath = property(_get_filepath)
+
+    def _start_of_basename_in_filepath(self):
+        return len(os.path.normpath(os.path.join(self._dirname, "x"))) - 1
+
+    def _get_match_start_offset(self):
+        return self._match_start_offset
+    match_start_offset = property(_get_match_start_offset)
+
+    def _get_match_end_offset(self):
+        return self._match_end_offset
+    match_end_offset = property(_get_match_end_offset)
+
+    def _get_match_start(self):
+        if self.whole_path_matching:
+            return self._match_start_offset
+        else:
+            return self._start_of_basename_in_filepath() + self._match_start_offset
+    def _set_match_start(self, v):
+        self._match_start_offset = v
+    match_start = property(_get_match_start, _set_match_start)
+
+    def _get_match_end(self):
+        if self.whole_path_matching:
+            return self._match_end_offset
+        else:
+            return self._start_of_basename_in_filepath() + self._match_end_offset
+    def _set_match_end(self, v):
+        self._match_end_offset = v
+    match_end = property(_get_match_end, _set_match_end)
+
+    def __lt__(self, other):
+        return self.score < other.score
+
+# }}}1
+
+# Controllers {{{1
+# ==============================================================================
+
+class Selector(object): # {{{2
+
+    help_message = (
+        "Movement",
+        "--------",
+        "<UP>, <CTRL-P>     Move focus to previous item.",
+        "<DOWN>, <CTRL-N>   Move focus to next item.",
+        "<CTRL-B>           Move backwards one page.",
+        "<CTRL-F>           Move forwards one page.",
+        "",
+        "Query Settings",
+        "--------------",
+        "<CTRL-E>           Change match expression type: fuzzy,",
+        "                   regular, or literal.",
+        "<CTRL-W>           Toggle between matching whole path or just",
+        "                   basename.",
+        "",
+        "Display",
+        "-------",
+        "<CTRL-R>           Toggle between display whole or relative",
+        "                   paths",
+        "<CTRL-Y>, <F2>     Unhide/Unhide Git-ignores.",
+        "",
+        "Selection",
+        "---------",
+        "<TAB>              Toggle selection of current focal item.",
+        "<CTRL-A>           Add all visible items to selection.",
+        "<CTRL-X>           Cancel selection: deselect all items.",
+        "<CTRL-SPACE>       Invert current selection.",
+        "",
+        "Action",
+        "--------",
+        "<ENTER>            Add current focal item to selection, exit,",
+        "                   and execute actions on all selected items.",
+        "<RIGHT>, <CTRL-D>  File mode: execute action on current focal",
+        "                   item without exiting program.",
+        "                   Directory mode: enter focal item directory",
+        "                   and restart search from there.",
+        "<LEFT>,  <CTRL-U>  Move up to parent directories of current",
+        "                   search paths and restart search from there.",
+        "<CTRL-G>           Show information about current focal item.",
+        "<ESC>, <CTRL-C>    Exit without executing any actions."
+
+    )
+
+    class ResetSourcesException(Exception):
+        def __init__(self, source_items):
+            Exception.__init__(self)
+            self.source_items = source_items
+
+    class RecalculateSourcesException(Exception):
+        def __init__(self):
+            Exception.__init__(self)
+
+    def __init__(self,
+            display,
+            ranker,
+            whole_path_matching=False,
+            match_type="fuzzy",
+            multiselection_mode=True,
+            path_up_fn=None,
+            path_down_fn=None,
+            display_absolute_paths=None,
+            display_split_filename_and_dirname=False,
+            search_path_info=None,
+            is_not_filesystem_path_entries=False,
+            ):
+        self.display = display
+        self.ranker = ranker
+        self.whole_path_matching = whole_path_matching
+        self.match_type = match_type
+        self.multiselection_mode = multiselection_mode
+        self.path_up_fn = path_up_fn
+        self.path_down_fn = path_down_fn
+        self.display_absolute_paths = display_absolute_paths
+        self.display_split_filename_and_dirname = display_split_filename_and_dirname
+        self.search_path_info = search_path_info
+        self.is_not_filesystem_path_entries = is_not_filesystem_path_entries
+
+    def apply_query(self, query_chars, source_items):
+        if not query_chars:
+            return sorted(source_items, key=lambda x: x.score)
+        else:
+            queried_items_items = []
+            ranker = self.ranker(
+                    query_str="".join(query_chars),
+                    whole_path_matching=self.whole_path_matching,
+                    match_type=self.match_type)
+            for item in source_items:
+                item.whole_path_matching = self.whole_path_matching # needs to be updated here
+                try:
+                    score, match_start, match_end = ranker.rank(item)
+                except FuzzyRanker.IncompleteRegularExpressionPatternException:
+                    return source_items
+                if score:
+                    item.score = score
+                    item.match_start = match_start
+                    item.match_end = match_end
+                    queried_items_items.append(item)
+                else:
+                    item.clear_metadata()
+            return sorted(queried_items_items, key=lambda x: x.score)
+
+    def _loop(self, source_items, controller):
+        current_query_chars = []
+        focal_item_index = 0
+        listed_items = list(source_items)
+        self.redisplay_all(
+                items=listed_items,
+                focal_item_index=focal_item_index,
+                query_chars=current_query_chars,
+                )
+        while True:
+            keycode = self.display.get_query_keycode(echo=False)
+            if keycode is None:
+                continue
+            if keycode.name == "ESC" or keycode.name =="CTRL-C":
+                raise KeyboardInterrupt
+            elif keycode.name == "UP" or keycode.name == "CTRL-P":
+                focal_item_index = self.display.move_focus_to_previous(focal_item_index)
+            elif keycode.name == "DOWN" or keycode.name == "CTRL-N":
+                focal_item_index = self.display.move_focus_to_next(focal_item_index)
+            elif keycode.name == "CTRL-B":
+                focal_item_index = self.display.page_up(focal_item_index)
+            elif keycode.name == "CTRL-F":
+                focal_item_index = self.display.page_down(focal_item_index)
+            elif keycode.name == "LEFT" or keycode.name == "CTRL-U":
+                if self.path_up_fn:
+                    new_items, search_path_info = self.path_up_fn()
+                    if new_items is not None:
+                        self.search_path_info = search_path_info
+                        self.display.fill_content_buffer()
+                        self.display.refresh()
+                        raise Selector.ResetSourcesException(source_items=new_items)
+                    else:
+                        # query status bar might be over-written with message
+                        self.redisplay_status_bar()
+            elif keycode.name == "RIGHT" or keycode.name == "CTRL-D":
+                if self.path_down_fn and listed_items and focal_item_index < len(listed_items):
+                    focal_item = listed_items[focal_item_index]
+                    new_items, search_path_info = self.path_down_fn(
+                            focal_item=focal_item,
+                            selected_items=[focal_item])
+                    if new_items is not None:
+                        self.search_path_info = search_path_info
+                        self.display.fill_content_buffer()
+                        self.display.refresh()
+                        raise Selector.ResetSourcesException(source_items=new_items)
+                    else:
+                        # query status bar might be over-written with message
+                        self.redisplay_status_bar()
+            else:
+                # following all require full re-writing
+                suppress_rewrite = False
+                if keycode.name == "CTRL-W":
+                    # <CTRL-W>: Cycle whole-path vs. basename matching
+                    if not self.is_not_filesystem_path_entries:
+                        self.whole_path_matching = not self.whole_path_matching
+                        listed_items = self.apply_query(current_query_chars, source_items)
+                elif keycode.name == "CTRL-E":
+                    # <CTRL-E>: Cycle matching-modes
+                    if self.match_type == "literal":
+                        self.match_type = "regexp"
+                    elif self.match_type == "fuzzy":
+                        self.match_type = "literal"
+                    else:
+                        self.match_type = "fuzzy"
+                    listed_items = self.apply_query(current_query_chars, source_items)
+                elif keycode.name == "CTRL-I":
+                    # <TAB>: toggle in multiselection mode; simply consume character otherwise
+                    if self.multiselection_mode:
+                        listed_items[focal_item_index].is_selected = not listed_items[focal_item_index].is_selected
+                elif keycode.name == "CTRL-X":
+                    # <CTRL-X>: Cancel all in multiselection mode; simply consume character otherwise
+                    if self.multiselection_mode:
+                        for item in listed_items:
+                            item.is_selected = False
+                elif keycode.name == "CTRL-A":
+                    # <CTRL-A>: Mark all in multiselection mode; simply consume character otherwise
+                    if self.multiselection_mode:
+                        for item in listed_items:
+                            item.is_selected = True
+                elif keycode.name == "NUL":
+                    # <CTRL-SPACE>: Invert selection
+                    if self.multiselection_mode:
+                        for item in listed_items:
+                            item.is_selected = not item.is_selected
+                elif keycode.name == "CTRL-J" or keycode.name == "CTRL-M":
+                    if listed_items and focal_item_index <= len(listed_items):
+                        return self._extract_selected_from_listed_items(
+                                listed_items=listed_items,
+                                focal_item_index=focal_item_index)
+                    else:
+                        suppress_rewrite = True
+                elif keycode.name == "CTRL-R":
+                    if not self.is_not_filesystem_path_entries:
+                        self.display_absolute_paths = not self.display_absolute_paths
+                elif keycode.name == "CTRL-G":
+                    # <CTRL-G> info
+                    num_displayed_items = self.display.num_content_buffer_items()
+                    if len(listed_items) == num_displayed_items:
+                        num_items_metainfo = "{}".format(num_displayed_items)
+                    else:
+                        num_items_metainfo = "{} ({} hidden)".format(num_displayed_items, len(listed_items))
+                    path_to_display = os.path.abspath(listed_items[focal_item_index].filepath)
+                    # path_to_display = listed_items[focal_item_index].filepath,
+                    original_truncate_width = len(path_to_display)
+                    factor = 1.0
+                    while True and factor > 0:
+                        message = "{} of {}: {}".format(
+                                focal_item_index+1,
+                                num_items_metainfo,
+                                truncate_middle(path_to_display, int(factor * original_truncate_width)),
+                                path_to_display,
+                                )
+                        try:
+                            self.display.message(
+                                    [message],
+                                    color=self.display.help_color,
+                                    vpadding=1,
+                                    hpadding=1)
+                            break
+                        except curses.error:
+                            factor = factor - 0.05
+                            pass
+                elif keycode.name == "F1":
+                    self.display.message(
+                            self.help_message,
+                            color=self.display.help_color,
+                            vpadding=1,
+                            hpadding=2)
+                elif keycode.name == "CTRL-H" or keycode.name == "DEL":
+                    # Delete/backspace
+                    if current_query_chars:
+                        current_query_chars.pop()
+                        if len(current_query_chars) > 0:
+                            listed_items = self.apply_query(current_query_chars, source_items)
+                        else:
+                            listed_items = list(source_items)
+                            for item in listed_items:
+                                item.clear_metadata()
+                        focal_item_index = 0 # TODO: adjust this smartly
+                elif keycode.name == "CTRL-K":
+                    if not self.is_not_filesystem_path_entries:
+                        self.display_split_filename_and_dirname = not self.display_split_filename_and_dirname
+                elif keycode.name == "CTRL-L" or keycode.name == "EVENT-RESIZE":
+                    # do nothing: just re-write
+                    # pass
+                    self.display.stdscr.refresh()
+                    self.redisplay_all(
+                            items=listed_items,
+                            focal_item_index=focal_item_index,
+                            query_chars=current_query_chars,
+                            )
+                elif keycode.name == "CTRL-Y" or keycode.name == "F2":
+                    if not self.is_not_filesystem_path_entries:
+                        controller.args.include_gitignores = not controller.args.include_gitignores
+                        raise Selector.RecalculateSourcesException
+                elif not keycode.is_special:
+                    current_query_chars.append(keycode.name)
+                    listed_items = self.apply_query(current_query_chars, source_items)
+                    focal_item_index = 0 # TODO: adjust this smartly
+                else:
+                    # not supported
+                    suppress_rewrite = True
+                if not suppress_rewrite:
+                    self.redisplay_all(
+                            items=listed_items,
+                            focal_item_index=focal_item_index,
+                            query_chars=current_query_chars,
+                            )
+
+    def _extract_selected_from_listed_items(self, listed_items, focal_item_index):
+        if listed_items and focal_item_index <= len(listed_items):
+            if self.multiselection_mode:
+                listed_items[focal_item_index].is_selected = True
+                return [item for item in listed_items if item.is_selected]
+            else:
+                return [listed_items[focal_item_index]]
+        else:
+            return []
+
+    def redisplay_all(self, items, focal_item_index, query_chars):
+        self.display.write_all(
+                items=items,
+                focal_item_index=focal_item_index,
+                query_str="".join(query_chars),
+                match_type=self.match_type,
+                whole_path_matching=self.whole_path_matching,
+                display_absolute_paths=self.display_absolute_paths,
+                display_split_filename_and_dirname=self.display_split_filename_and_dirname,
+                search_path_info=self.search_path_info,
+                )
+
+    def redisplay_status_bar(self):
+        return self.display.write_status_bar(
+                search_path_info=self.search_path_info,
+                match_type=self.match_type,
+                whole_path_matching=self.whole_path_matching,
+                )
+
+    def run(self, items, controller):
+        while True:
+            try:
+                return self._loop(items, controller)
+            except Selector.ResetSourcesException as e:
+                items = e.source_items
+
+# }}}2
+
+class DirectorySource(object): # {{{2
+
+    dot_dirs_ignore_pattern = None
+
+    def __init__(self,
+            display,
+            target_filename_patterns=None,
+            ignore_directories=True,
+            ignore_files=True,
+            respect_gitignores=True,
+            include_hidden=False,
+            dirs_to_exclude=None,
+            files_to_exclude=None,
+            filter_for_glob_names=None,
+            max_recursion_depth=None,
+            max_content_items=None,
+            ):
+        self.display = display
+        self.ignore_directories = ignore_directories
+        self.ignore_files = ignore_files
+        self.respect_gitignores = respect_gitignores
+        if target_filename_patterns is None:
+            self.target_filename_pattern = None
+        else:
+            self.target_filename_pattern = re.compile("(" + "|".join(target_filename_patterns) + ")")
+        self.include_hidden = include_hidden
+        if not self.include_hidden:
+            hidden_dir_patterns = [
+                                  r"^(\.{s})?\.[^.{s}]".format(s=os.path.sep),
+                                  r"{s}\.[^.]".format(s=os.path.sep),
+                                 ]
+            try:
+                dirs_to_exclude.extend(hidden_dir_patterns)
+            except AttributeError:
+                dirs_to_exclude = hidden_dir_patterns
+            hidden_file_pattern = r"^\."
+            try:
+                files_to_exclude.append(hidden_file_pattern)
+            except AttributeError:
+                files_to_exclude = [hidden_file_pattern]
+        if dirs_to_exclude is None:
+            self.dirs_to_exclude = None
+        else:
+            self.dirs_to_exclude = re.compile("(" + "|".join(dirs_to_exclude) + ")")
+        if files_to_exclude is None:
+            self.files_to_exclude = None
+        else:
+            self.files_to_exclude = re.compile("(" + "|".join(files_to_exclude) + ")")
+        if filter_for_glob_names is None:
+            self.filter_for_glob_names = None
+        else:
+            self.filter_for_glob_names = filter_for_glob_names
+        if DirectorySource.dot_dirs_ignore_pattern is None:
+            dot_dirs_to_ignore = ["git", "svn", "hg"]
+            dot_dirs_to_ignore = ["(.*/|)\.{}".format(d) for d in dot_dirs_to_ignore]
+            dot_dirs_ignore_pattern = "(" + "|".join(dot_dirs_to_ignore) + ")"
+            DirectorySource.dot_dirs_ignore_pattern = re.compile(dot_dirs_ignore_pattern)
+        self.max_recursion_depth = max_recursion_depth
+        self.max_content_items = max_content_items
+        self.filters = []
+        self.git_exclude_filters = []
+
+    def recurse_directory_up(self, dirname):
+        if os.path.isdir(dirname):
+            while True:
+                yield dirname
+                newdir = os.path.dirname(dirname)
+                if not newdir or newdir == dirname:
+                    break
+                dirname = newdir
+
+    def find_parent_gis(self, start_dir):
+        dirs = self.recurse_directory_up(start_dir)
+        for dirname in dirs:
+            if dirname == start_dir:
+                continue
+            pgi = os.path.join(dirname, '.gitignore')
+            if os.path.isfile(pgi):
+                self.filters.append((dirname, GitIgnoreFilter(dirname, '.gitignore')))
+        self.filters.reverse()
+        return self.filters
+
+    def fetch(self,
+            start_dir=".",
+            results=None,
+            suppress_progress_feedback=False):
+        self.filters = []
+        self.git_exclude_filters = []
+        if self.respect_gitignores:
+            self.find_parent_gis(start_dir)
+        if results is None:
+            results = []
+        progress = self.display.get_progress_ticker()
+        total_items_scanned = 0
+        for search_idx, (dirname, dirs, filenames) in enumerate(walk(start_dir)):
+            if self.display.check_for_cancel():
+                raise KeyboardInterrupt()
+            total_items_scanned += (1 + len(dirs) + len(filenames))
+            if search_idx % 100 == 0:
+                progress.update("Scanning: found {} out of {} names".format(len(results), total_items_scanned))
+            if self.max_recursion_depth is not None:
+                recursion_level = dirname.count(os.path.sep)
+                if recursion_level == self.max_recursion_depth:
+                    del dirs[:]
+                elif recursion_level > self.max_recursion_depth:
+                    continue
+            if self.respect_gitignores and ".git" in dirs:
+                giexclude = os.path.join('.git', 'info', 'exclude')
+                if os.path.isfile(os.path.join(dirname, giexclude)):
+                    gief = GitIgnoreFilter(dirname, giexclude)
+                    self.git_exclude_filters.append(gief)
+            if DirectorySource.dot_dirs_ignore_pattern.match(dirname):
+                continue
+            if self.dirs_to_exclude is not None and self.dirs_to_exclude.match(dirname):
+                continue
+            names = []
+            if not self.ignore_files:
+                for f in filenames:
+                    if ((self.files_to_exclude is None or not self.files_to_exclude.match(f))
+                            and (self.target_filename_pattern is None or self.target_filename_pattern.match(f))
+                            and (self.filter_for_glob_names is None or any(fnmatch.fnmatch(f, gf) for gf in self.filter_for_glob_names))
+                            ):
+                        # if self.paths_to_exclude is not None:
+                        #     # only do this if actual paths to exclude
+                        #     ff = os.path.join(dirname, f)
+                        #     if not self.paths_to_exclude.match(f):
+                        #         names.append(f)
+                        # else:
+                        #     names.append(f)
+                        names.append(f)
+            if not self.ignore_directories:
+                for candidate_dir in dirs:
+                    if ((not DirectorySource.dot_dirs_ignore_pattern.match(candidate_dir))
+                            and (self.dirs_to_exclude is None or not self.dirs_to_exclude.match(candidate_dir))
+                            and (self.filter_for_glob_names is None or all(fnmatch.fnmatch(candidate_dir, gf) for gf in self.filter_for_glob_names))
+                            ):
+                        names.append(candidate_dir)
+            if self.respect_gitignores and '.gitignore' in filenames:
+                gif = GitIgnoreFilter(dirname, '.gitignore', self.git_exclude_filters)
+                self.filters.append((dirname, gif))
+            while self.filters: # find filter that applies to current path
+                path, filter_obj = self.filters[-1]
+                if dirname.startswith(path):
+                    break
+                self.filters.pop()
+            fltr = None
+            if self.filters:
+                fltr = self.filters[-1][1] # grab filter object of last filter entry
+            for name in names:
+                if fltr is None or fltr(name, dirname):
+                    entry = Entry(dirname=dirname,
+                            filename=name,
+                            score=len(results),
+                            match_start=0,
+                            match_end=0,
+                            whole_path_matching=False)
+                    results.append(entry)
+                    if self.max_content_items and len(results) > self.max_content_items:
+                        self.display.status_bar_error_message("Item limit reached: {}".format(self.max_content_items), blocking=True)
+                        raise KeyboardInterrupt()
+            # have to delete the names manually
+            if fltr is not None:
+                for i in range(len(dirs) - 1, -1, -1):
+                    if not fltr(dirs[i], dirname):
+                        del dirs[i]
+        return results
+# }}}2
+
+class GitIgnoreFilter(object): # {{{2
+    # Optimization
+    lastdir = None
+    last_path_filter = None
+
+    globchars = re.compile('[*\[\]?]')
+    def __init__(self,
+            dirname,
+            filename,
+            inherited_filters=None):
+        self.dirname = dirname
+        self.fn = os.path.join(dirname, filename)
+        path_filters = []
+        glob_filters = []
+        exact_filters = set(['.git'])
+        with open(self.fn) as f:
+            gc = self.globchars
+            for fn in f:
+                if fn.startswith('#'):
+                    continue
+                fn = fn.strip()
+                if fn.startswith('/') or fn.endswith('/'):
+                    path_filters.append(fn)
+                elif gc.search(fn) is not None:
+                    glob_filters.append(fn)
+                else:
+                    exact_filters.add(fn)
+        if glob_filters:
+            self.glob_filters = glob_filters
+        else:
+            self.glob_filters = []
+        self.exact_filters = exact_filters
+        self.path_filters = self.setup_path_filters(path_filters)
+        if inherited_filters is not None:
+            for f in inherited_filters:
+                self.glob_filters.extend(f.glob_filters)
+                self.exact_filters.update(f.exact_filters)
+                for k in f.path_filters:
+                    try:
+                        self.path_filters[k].extend(f.path_filters[k])
+                    except KeyError:
+                        self.path_filters[k] = list(f.path_filters[k])
+
+    def setup_path_filters(self, path_filters):
+        dirmaps = {}
+        for pf in path_filters:
+            pf = pf.rstrip("/")
+            dirname, basename = os.path.split(pf)
+            dm = os.path.join(self.dirname, dirname.lstrip("/")).rstrip("/")
+            glob = basename.strip()
+            if dm in dirmaps:
+                dirmaps[dm].append(glob)
+            else:
+                dirmaps[dm] = [glob]
+        return dirmaps
+
+    def __call__(self, fn, dirname):
+        # check exact
+        if fn in self.exact_filters:
+            return False
+        # Check global globs
+        for f in self.glob_filters:
+            # yes, this block is ugly and horribly inefficient
+            # better approach needed, probably by using reg-ex
+            full_path = os.path.join(dirname, fn)
+            if fnmatch.fnmatch(full_path, f):
+                return False
+            if fnmatch.fnmatch(fn, f):
+                return False
+            if fnmatch.fnmatch(os.path.normpath(full_path), f):
+                return False
+            if fnmatch.fnmatch(os.path.normpath(fn), f):
+                return False
+        lpf = self.path_filters.get(dirname)
+        # check path dependent globs
+        if lpf is not None:
+            for f in lpf:
+                if fnmatch.fnmatch(fn, f):
+                    return False
+        return True
+# }}}2
+
+class FuzzyRanker(object): # {{{2
+
+    class IncompleteRegularExpressionPatternException(Exception):
+        pass
+
+    def match_and_score(query_str, target_str, match_type):
+        if match_type == "fuzzy":
+            pattern = '.*?'.join(map(re.escape, list(query_str)))
+        elif match_type == "literal":
+            pattern = ''.join(map(re.escape, list(query_str)))
+        elif match_type == "regexp":
+            pattern = query_str
+        else:
+            raise TypeError("Unrecognized pattern type: '{}'".format(match_type))
+        try:
+            match = re.search(pattern, target_str, re.I)
+        except re.error:
+            if match_type == "regexp":
+                raise FuzzyRanker.IncompleteRegularExpressionPatternException()
+        if match is None:
+            result = 0
+        else:
+            # result = 100.0 / ((1+match.start()) * (match.end()-match.start()+1))
+            result = ((1 + match.start()) * (match.end() - match.start() + 1)) / 1000.0
+            # if match_type == "fuzzy":
+            #     result = (1+levenshtein(target_str, query_str))
+            # else:
+            #     result = ((1 + match.start()) * (match.end() - match.start() + 1)) / 1000.0
+        return match, result
+    match_and_score = staticmethod(match_and_score)
+
+    def __init__(self,
+            query_str,
+            whole_path_matching=False,
+            match_type="fuzzy"):
+        self.whole_path_matching = whole_path_matching
+        self.weight_f = lambda f: f.dirname.count(os.sep) ** 0.5
+        self.query_strings = [s for s in re.split("[&;]", query_str) if s]
+        self.match_type = match_type
+
+    def rank(self, item):
+        # if self.whole_path_matching:
+        #     part = item.filepath
+        # else:
+        #     part = item.filename
+        part = item.match_target
+        agg_score = 0.0
+        match_start = len(part)
+        match_end = -1
+        for q in self.query_strings:
+            match, score = self.match_and_score(q, part, self.match_type)
+            if score is None or score == 0:
+                # return None, None, None
+                return None, None, None
+            if score is not None:
+                match_start = min(match_start, match.start())
+                match_end = max(match_end, match.end())
+                agg_score += score
+        # return agg_score + self.weight_f(item), match_start, match_end
+        return agg_score, match_start, match_end
+# }}}2
+
+class Controller(object): # {{{2
+
+    ### Life-cycle
+
+    def __init__(self, subscreen, args):
+        self.subscreen = subscreen
+        self.args = args
+        self.display = Display(
+            stdscr=self.subscreen.stdscr,
+            is_not_filesystem_path_entries=args.is_not_filesystem_path_entries)
+        self.editor_path = os.environ.get("FUZZYSNAKE_EDITOR", os.environ.get("EDITOR", "vi"))
+
+    def scan_search_paths(self, items=None, exit_on_interrupt=False, interrupt_exit_value=1):
+        if items is None:
+            items = []
+        respect_gitignores = not self.args.include_gitignores
+        if self.args.directory_search_mode:
+            ignore_directories = False
+            ignore_files = True
+        else:
+            ignore_directories = True
+            ignore_files = False
+        if not self.args.search_paths:
+            self.args.search_paths = ["."]
+        try:
+            for path in self.args.search_paths:
+                if path == "-":
+                    if sys.platform.startswith('win'):
+                        raise NotImplementedError("Reading from standard input is not supported on this system at this time")
+                    # NOTE: To allow us to continue to get input from the tty
+                    # standard input in the curses window in the interactive loop,
+                    # We do *not* read from `sys.stdin` directly here. Instead we open
+                    # a new file object bound to the system file descriptor '0'
+                    # (standard input), and read from that. After this is done and
+                    # closed (using the context manager), we must set sys.stdin's
+                    # file descriptor to the tty opened for reading.
+                    #
+                    # Alternate approach:
+                    #
+                    #   # if os.isatty(0):
+                    #   #     exit(1)
+                    #   # else:
+                    #   #     # get stdin from tty
+                    #   #     os.dup2(0, 3)
+                    #   #     os.close(0)
+                    #   #     my_stdin = os.fdopen(3, 'r')
+                    #   #     sys.stdin = open('/dev/tty', 'r')
+                    with os.fdopen(0, 'r') as src:
+                        for item in src.read().split("\n"):
+                            item = unicode_str(item)
+                            item = os.path.expandvars(os.path.expanduser(item))
+                            dirname = os.path.dirname(item)
+                            basename = os.path.basename(item)
+                            entry = Entry(dirname=dirname,
+                                    filename=basename,
+                                    score=len(items),
+                                    match_start=0,
+                                    match_end=0,
+                                    whole_path_matching=False)
+                            items.append(entry)
+                    sys.stdin = open("/dev/tty", "r")
+                else:
+                    # Create a new sourcer on each pass.
+                    # A little inefficient, but avoids cross-application
+                    # of .gitignore etc. filters
+                    ds = DirectorySource(
+                            display=self.display,
+                            target_filename_patterns=self.args.target_filename_pattern,
+                            ignore_directories=ignore_directories,
+                            ignore_files=ignore_files,
+                            respect_gitignores=respect_gitignores,
+                            include_hidden=self.args.include_hidden,
+                            dirs_to_exclude=self.args.dirs_to_exclude,
+                            files_to_exclude=self.args.files_to_exclude,
+                            filter_for_glob_names=self.args.filter_for_glob_names,
+                            max_recursion_depth=self.args.max_recursion_depth,
+                            max_content_items=self.args.max_content_items)
+                    path = os.path.expandvars(os.path.expanduser(path))
+                    ds.fetch(start_dir=path,
+                            results=items,
+                            suppress_progress_feedback=self.args.no_progress_window)
+        except KeyboardInterrupt:
+            self.exit(interrupt_exit_value)
+            if exit_on_interrupt:
+                self.exit(interrupt_exit_value)
+        return items
+
+    def path_up(self):
+        self.args.search_paths = sorted(set([os.path.normpath(os.path.relpath(os.path.abspath(os.path.join(path, os.pardir)))) for path in self.args.search_paths]))
+        items = self.scan_search_paths()
+        return items, self.get_search_path_info()
+
+    def path_down(self, focal_item, selected_items):
+        if self.args.directory_search_mode:
+            new_dir = focal_item.filepath
+            old_search_paths = list(self.args.search_paths)
+            self.args.search_paths = [os.path.normpath(os.path.relpath(new_dir))]
+            items = self.scan_search_paths()
+            if not items:
+                self.display.status_bar_error_message("No non-hidden/non-ignored sub-directories available under selected path", blocking=True)
+                self.args.search_paths = old_search_paths
+                return None, None
+            else:
+                return items, self.get_search_path_info()
+        else:
+            # filepaths = [entry.filepath for entry in selected_items]
+            # if not filepaths:
+            #     self.display.error("No valid files found or selected")
+            # else:
+            #     self.apply_action(filepaths, as_subprocess=True)
+            filepath = focal_item.filepath
+            if filepath:
+                self.apply_action([filepath], as_subprocess=True)
+                # self.execute_command(
+                #         self.editor_path,
+                #         filepath,
+                #         verbose=False,
+                #         as_subprocess=True)
+            return None, None
+
+    def get_search_path_info(self):
+        if len(self.args.search_paths) == 1:
+            search_path_info = "{}".format(os.path.normpath(os.path.abspath(self.args.search_paths[0])))
+        else:
+            search_path_info = "(multiple search paths)"
+        return search_path_info
+
+    def apply_action(self, filepaths, as_subprocess=False):
+        self.display.stop()
+        if self.args.action_type == "edit":
+            self.execute_command(self.editor_path, filepaths, verbose=self.args.echo_action_to_stderr, as_subprocess=as_subprocess)
+        elif self.args.action_type == "open":
+            self.execute_command("open", filepaths, verbose=self.args.echo_action_to_stderr, as_subprocess=as_subprocess)
+        elif self.args.action_type == "command":
+            self.execute_command(self.args.action_target, filepaths, verbose=self.args.echo_action_to_stderr, as_subprocess=as_subprocess)
+        elif self.args.action_type == "print":
+            if not hasattr(self.args, "action_target") or self.args.action_target == "-":
+                self.subscreen.restore_standard_channels()
+                for filepath in filepaths:
+                    p = self.compose_output_path(filepath) + self.args.name_terminator
+                    sys.stdout.write(p)
+                    sys.stdout.flush()
+                    if self.args.echo_selection_to_stderr:
+                        sys.stderr.write(p)
+                self.subscreen.redirect_standard_channels()
+                if not as_subprocess:
+                    self.exit(0)
+            else:
+                out = open(os.path.expandvars(os.path.expanduser(self.args.action_target)), "w")
+                with out:
+                    for filepath in filepaths:
+                        p = self.compose_output_path(filepath) + self.args.name_terminator
+                        out.write(p)
+                        if self.args.echo_selection_to_stderr:
+                            sys.stderr.write(p)
+                if not as_subprocess:
+                    self.exit(0)
+        else:
+            error_msg = "Unrecognized action: '{}'".format(args.action_type)
+            if not as_subprocess:
+                self.exit(error_msg)
+            else:
+                self.display.error(error_msg)
+
+    def execute_command(self, *args, **kwargs):
+        self.subscreen.restore_standard_channels()
+        try:
+            execute_command(*args, **kwargs)
+        except OSError as e:
+            error_msg = "Error executing command: {}".format(" ".join(e.command_tokens))
+            self.exit(error_msg)
+        self.subscreen.redirect_standard_channels()
+
+    def exit(self, exit_arg):
+        self.display.stop()
+        sys.exit(exit_arg)
+
+    def run(self):
+        selected = self.run_query()
+        if not selected:
+            self.exit(1) # raise error to let parent shell know nothing was selected
+        if self.args.is_not_filesystem_path_entries:
+            targets = [entry._filename for entry in selected] # more hacks
+        else:
+            targets = [entry.filepath for entry in selected]
+        if targets:
+            self.apply_action(targets, as_subprocess=False)
+        return len(targets)
+
+    def print_list(self, out=None):
+        items = self.scan_search_paths()
+        self.display.stop()
+        self.subscreen.restore_standard_channels()
+        if out is None:
+            out = sys.stdout
+        for item in items:
+            item_str = "{}{}".format(self.compose_output_path(item.filepath), self.args.name_terminator)
+            out.write(item_str)
+            if self.args.echo_selection_to_stderr:
+                sys.stderr.write(item_str)
+        out.flush()
+        self.subscreen.redirect_standard_channels()
+        self.display.restart()
+        # raise KeyboardInterrupt()
+
+    def compose_output_path(self, path):
+        if self.args.is_not_filesystem_path_entries:
+            f = path
+        elif self.args.output_relative_paths:
+            f = os.path.relpath(path)
+        else:
+            f = os.path.abspath(path)
+        return f
+
+    def run_query(self):
+        items = self.scan_search_paths()
+        if not items:
+            self.exit("No valid files or directories found.")
+        ranker = FuzzyRanker
+        selector = Selector(
+                display=self.display,
+                ranker=ranker,
+                whole_path_matching=self.args.whole_path_match,
+                match_type=self.args.match_type,
+                multiselection_mode=self.args.multiselection_mode,
+                path_up_fn=self.path_up,
+                path_down_fn=self.path_down,
+                display_absolute_paths=self.args.display_absolute_paths,
+                search_path_info=self.get_search_path_info(),
+                is_not_filesystem_path_entries=self.args.is_not_filesystem_path_entries,
+                )
+        while True:
+            try:
+                selected = selector.run(items, controller=self)
+                break
+            except Selector.RecalculateSourcesException:
+                items = self.scan_search_paths()
+        return selected
+
+# }}}2
+
+# }}}1
+
+# CLI {{{1
+# ==============================================================================
+
+def parse_cli_args():  #{{{2
+    parser = argparse.ArgumentParser(description=__description__)
+    parser.add_argument("--version", action="version", version="FuzzySnake " + __version__)
+
+    search_options_section = parser.add_argument_group("Search Options")
+    search_options_section.add_argument(
+            "search_paths",
+            metavar="DIR",
+            nargs="*",
+            help="Top-level directory path(s) to search. Defaults to "
+            "current directory ('{}').".format(os.curdir))
+    search_options_section.add_argument(
+            "-d", "--directory-paths",
+            action="store_true",
+            dest="directory_search_mode",
+            default=False,
+            help="Search for directory paths instead of filenames.")
+    search_options_section.add_argument(
+            "-r", "--recursion-limit", "--max-depth",
+            dest="max_recursion_depth",
+            metavar="DEPTH",
+            type=int,
+            help="Maximum depth of sub-directories to recursively search. "
+            "If not specified, recursion depth is unlimited. If 0, then "
+            "only the top-level directory is searched.")
+    search_options_section.add_argument(
+            "--item-limit", "--max-items",
+            dest="max_content_items",
+            metavar="COUNT",
+            type=int,
+            help="Maximum number of items to find. If 0, then no limit.",
+            )
+    search_options_section.add_argument(
+            "-s", "--single-selection",
+            action="store_false",
+            dest="multiselection_mode",
+            default=True,
+            help="Do not allow multiple entries to be marked/unmarked for selection using <TAB>.")
+    search_options_section.add_argument(
+            "--no-progress-window",
+            action="store_true",
+            default=False,
+            help="Do not show progress of filesystem scanning.")
+    search_options_section.add_argument(
+            "--display-absolute-paths",
+            action="store_true",
+            dest="display_absolute_paths",
+            default=False,
+            help="Show absolute paths instead of relative paths in viewer.")
+    search_options_section.add_argument(
+            "--not-filesystem-paths",
+            dest="is_not_filesystem_path_entries",
+            action="store_true",
+            default=False,
+            help="Do not treat input as file/directory paths.")
+
+    query_options_section = parser.add_argument_group("Query Options")
+    query_options_section.add_argument(
+            "-w", "--whole-path-match",
+            action="store_true",
+            default=False,
+            help="Match against the *full* path of the file or directory, "
+            "including the parent directory name. If not specified, by "
+            "default, matching is agains the *basename* only. "
+            "Use `<CTRL-W>` to toggle between whole path and basename matching "
+            "during the search.")
+    # query_options_section.add_argument(
+    #         "-t", "--term-separator",
+    #         dest="term_separator",
+    #         default=";",
+    #         help=
+    #         "Specify the token to be used to separate multiple search "
+    #         "terms in the query expression. Defaults to '%(default)s'. "
+    #         "If multiple search terms are specified, a name has to "
+    #         "independently match every search term. Thus, if '%(default)s' "
+    #         "is given as the separator token, and 'foo%(default)sbar' is "
+    #         "typed as a query pattern, then names have match both 'foo'"
+    #         "AND 'bar'.")
+    match_type_section = parser.add_argument_group("Expression Options",
+            "The following flags set the initial expression type to be used. "
+            "You can cycle through expression type during a live search "
+            "by typing `<CTRL-E>`.")
+    match_type_group = match_type_section.add_mutually_exclusive_group()
+    match_type_group.add_argument(
+            "-f", "--fuzzy",
+            action="store_const",
+            dest="match_type",
+            const="fuzzy",
+            help="[DEFAULT] Fuzzy-expression: pattern is matched on a "
+            "character-by-character basis, with characters required to "
+            "occur in the same order as the pattern, but not necessarily "
+            "consecutively (an arbitrary number of extra characters are "
+            "allowed between matched characters).")
+    match_type_group.add_argument(
+            "-e", "--regexp",
+            action="store_const",
+            dest="match_type",
+            const="regexp",
+            help="Regular-expression: patterns are matched as full "
+            "(Python) regular expression patterns.")
+    match_type_group.add_argument(
+            "-l", "--literal",
+            action="store_const",
+            dest="match_type",
+            const="literal",
+            help="Literal-expression: patterns are matched exactly as "
+            "given.")
+    parser.set_defaults(match_type="fuzzy")
+
+    target_type_options = parser.add_argument_group("File Type Options",
+            "Constrain the search to specific types of files. If one or "
+            "more of the following are specified, then files of other "
+            "types will be excluded."
+            )
+    target_type_options.add_argument(
+            "--actionscript",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.as$|.*\.mxml$",
+            help="ActionScript")
+    target_type_options.add_argument(
+            "--ada",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.ada$|.*\.adb$|.*\.ads$",
+            help="Ada")
+    target_type_options.add_argument(
+            "--asm",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.asm$|.*\.s$",
+            help="ASM")
+    target_type_options.add_argument(
+            "--asp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.asp$",
+            help="ASP")
+    target_type_options.add_argument(
+            "--aspx",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.master$|.*\.ascx$|.*\.asmx$|.*\.aspx$|.*\.svc$",
+            help="ASPX")
+    target_type_options.add_argument(
+            "--autotools",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r"Makefile.am|configure.ac",
+            help="Autotools")
+    target_type_options.add_argument(
+            "--batch",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.bat$|.*\.cmd$",
+            help="MS-DOS/Windows batch")
+    target_type_options.add_argument(
+            "--cfmx",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.cfc$|.*\.cfm$|.*\.cfml$",
+            help="ColdFusion")
+    target_type_options.add_argument(
+            "--clojure",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.clj$",
+            help="Clojure")
+    target_type_options.add_argument(
+            "--cmake",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r"CMakeLists\.txt|.*\.cmake$",
+            help="CMake")
+    target_type_options.add_argument(
+            "--coffeescript",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.coffee$",
+            help="CoffeeScript")
+    target_type_options.add_argument(
+            "--cpp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.cpp$|.*\.cc$|.*\.cxx$|.*\.c\+\+$|.*\.c$|.*\.m$|.*\.hpp$|.*\.hh$|.*\.h$|.*\.hxx|.*\.h\+\+$|.*\.inc$",
+            help="C++ and C")
+    target_type_options.add_argument(
+            "--csharp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.cs$",
+            help="C#")
+    target_type_options.add_argument(
+            "--css",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.css$",
+            help="CSS")
+    target_type_options.add_argument(
+            "--csv",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.csv$",
+            help="Comma-separated values")
+    target_type_options.add_argument(
+            "--dart",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.dart$",
+            help="Dart")
+    target_type_options.add_argument(
+            "--delphi",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.pas$|.*\.int$|.*\.dfm$|.*\.nfm$|.*\.dof$|.*\.dpk$|.*\.dproj$|.*\.groupproj$|.*\.bdsgroup$|.*\.bdsproj$",
+            help="Delphi")
+    target_type_options.add_argument(
+            "--elisp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.el$",
+            help="Emacs Lisp")
+    target_type_options.add_argument(
+            "--elixir",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.ex$|.*\.exs$",
+            help="Elixir")
+    target_type_options.add_argument(
+            "--erlang",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.erl$|.*\.hrl$",
+            help="Erlang")
+    target_type_options.add_argument(
+            "--fasta",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.fas$|.*\.fasta$",
+            help="FASTA")
+    target_type_options.add_argument(
+            "--fortran",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.f$|.*\.f77$|.*\.f90$|.*\.f95$|.*\.f03$|.*\.for$|.*\.ftn$|.*\.fpp$",
+            help="Fortran")
+    target_type_options.add_argument(
+            "--go",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.go$",
+            help="Go")
+    target_type_options.add_argument(
+            "--groovy",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.groovy$|.*\.gtmpl$|.*\.gpp$|.*\.grunit$|.*\.gradle$",
+            help="Groovy")
+    target_type_options.add_argument(
+            "--haskell",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.hs$|.*\.lhs$",
+            help="Haskell")
+    target_type_options.add_argument(
+            "--html",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.htm$|.*\.html$",
+            help="HTML")
+    target_type_options.add_argument(
+            "--java",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.java$|.*\.properties$",
+            help="Java")
+    target_type_options.add_argument(
+            "--js",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.js$",
+            help="JavaScript")
+    target_type_options.add_argument(
+            "--json",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.json$",
+            help="JSON")
+    target_type_options.add_argument(
+            "--jsp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.jsp$|.*\.jspx$|.*\.jhtm$|.*\.jhtml$",
+            help="JavaServerPages")
+    target_type_options.add_argument(
+            "--julia",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.jl$",
+            help="Julia")
+    target_type_options.add_argument(
+            "--less",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.less$",
+            help="Less")
+    target_type_options.add_argument(
+            "--lisp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.lisp$|.*\.lsp$",
+            help="Lisp")
+    target_type_options.add_argument(
+            "--lua",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.lua$",
+            help="Lua")
+    target_type_options.add_argument(
+            "--make",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.mk$|.*\.mak$|makefile|Makefile|GNUmakefile",
+            help="Make")
+    target_type_options.add_argument(
+            "--markdown",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.mdown|.*\.markdown|.*\.md$",
+            help="Markdown")
+    target_type_options.add_argument(
+            "--matlab",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.m$",
+            help="MATLAB")
+    target_type_options.add_argument(
+            "--newick",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.dat$|.*\.tre$|.*\.newick$",
+            help="Newick")
+    target_type_options.add_argument(
+            "--nexus",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.nex$|.*\.nexus$|.*\.nxs$|.*\.mb$|.*\trees$",
+            help="NEXUS")
+    target_type_options.add_argument(
+            "--nexml",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.nexml$|.*\.xml$",
+            help="NEXML (including 'XML')")
+    target_type_options.add_argument(
+            "--objc",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.m$|.*\.h$",
+            help="Objective-C")
+    target_type_options.add_argument(
+            "--objcpp",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.mm$|.*\.h$",
+            help="Objective-C++")
+    target_type_options.add_argument(
+            "--ocaml",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.ml$|.*\.mli$",
+            help="OCaml")
+    target_type_options.add_argument(
+            "--parrot",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.pir$|.*\.pasm$|.*\.pmc$|.*\.ops$|.*\.pod$|.*\.pg$|.*\.tg$",
+            help="Parrot")
+    target_type_options.add_argument(
+            "--pdf",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.pdf$",
+            help="Adobe PDF (Portable Document Format) files")
+    target_type_options.add_argument(
+            "--perl",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.pl$|.*\.pm$|.*\.pod$|.*\.t$|.*\.psgi$",
+            help="Perl")
+    target_type_options.add_argument(
+            "--perl-test",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.t$",
+            help="Perl test")
+    target_type_options.add_argument(
+            "--php",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.php$|.*\.phpt$|.*\.php3$|.*\.php4$|.*\.php5$|.*\.phtml$",
+            help="PHP")
+    target_type_options.add_argument(
+            "--phylogenetics",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.nex$|.*\.nexus$|.*\.nxs$|.*\.mb$|.*\.fas$|.*\.fasta$|.*\.tre$|.*\.trees$|.*\.xml$|.*\.dat$|.*\.nexml$|.*\.newick$|.*\.phylip$|.*\.aln$",
+            help="Phylogenetics (NEXUS, NEWICK, PHYLIP, (Ne)XML, etc.)")
+    target_type_options.add_argument(
+            "--plone",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.pt$|.*\.cpt$|.*\.metadata$|.*\.cpy$|.*\.py$",
+            help="Plone")
+    target_type_options.add_argument(
+            "--python",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.py$",
+            help="Python")
+    target_type_options.add_argument(
+            "--rake",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r"Rakefile",
+            help="Rake")
+    target_type_options.add_argument(
+            "--r",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.R$|.*\.r$",
+            help="R")
+    target_type_options.add_argument(
+            "--rst",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.rst$|.*\.txt$|.*\.inc$",
+            help="ReStructuredText")
+    target_type_options.add_argument(
+            "--ruby",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.rb$|.*\.rhtml$|.*\.rjs$|.*\.rxml$|.*\.erb$|.*\.rake$|.*\.spec$|Rakefile",
+            help="Ruby")
+    target_type_options.add_argument(
+            "--rust",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.rs$",
+            help="Rust")
+    target_type_options.add_argument(
+            "--sass",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.sass$|.*\.scss$",
+            help="Sass")
+    target_type_options.add_argument(
+            "--scala",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.scala$",
+            help="Scala")
+    target_type_options.add_argument(
+            "--scheme",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.scm$|.*\.ss$",
+            help="Scheme")
+    target_type_options.add_argument(
+            "--shell",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.sh$|.*\.bash$|.*\.csh$|.*\.tcsh$|.*\.ksh$|.*\.zsh$|.*\.fish$",
+            help="shell")
+    target_type_options.add_argument(
+            "--smalltalk",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.st$",
+            help="Smalltalk")
+    target_type_options.add_argument(
+            "--sphinx",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.rst$|.*\.inc$|conf\.py",
+            help="Sphinx")
+    target_type_options.add_argument(
+            "--sql",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.sql$|.*\.ctl$",
+            help="SQL")
+    target_type_options.add_argument(
+            "--tcl",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.tcl$|.*\.itcl$|.*\.itk$",
+            help="TCl")
+    target_type_options.add_argument(
+            "--tex",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.tex$|.*\.bib$",
+            help="TeX")
+    target_type_options.add_argument(
+            "--text",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.txt$",
+            help="Plain text")
+    target_type_options.add_argument(
+            "--tsv",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.tsv$",
+            help="Tab-separated values")
+    target_type_options.add_argument(
+            "--tt",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.tt$|.*\.tt2$|.*\.ttml$",
+            help="TT")
+    target_type_options.add_argument(
+            "--vb",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.bas$|.*\.cls$|.*\.frm$|.*\.ctl$|.*\.vb$|.*\.resx$",
+            help="VisualBasic")
+    target_type_options.add_argument(
+            "--verilog",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.v$|.*\.vh$|.*\.sv$",
+            help="Verilog")
+    target_type_options.add_argument(
+            "--vhdl",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.vhd$|.*\.vhdl$",
+            help="VHDL")
+    target_type_options.add_argument(
+            "--vim",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.vim$",
+            help="Vim")
+    target_type_options.add_argument(
+            "--xml",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.xml$|.*\.dtd$|.*\.xsl$|.*\.xslt$|.*\.ent$",
+            help="XML")
+    target_type_options.add_argument(
+            "--xsv",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.csv$|.*\.tsv$",
+            help="General value-delimited/separated values")
+    target_type_options.add_argument(
+            "--yaml",
+            action="append_const",
+            dest="target_filename_pattern",
+            const=r".*\.yaml$|.*\.yml$",
+            help="YAML")
+
+    custom_filtering_options_group = parser.add_argument_group("Custom Filtering Options")
+    custom_filtering_options_group.add_argument(
+            "-n", "--name-glob",
+            dest="filter_for_glob_names",
+            action="append",
+            metavar="GLOB-PATTERN",
+            help= "General glob pattern to match against basenames of "
+            " files and directories to be included (e.g., '*.log', 'res??[0-9].*')."
+            " Multiple patterns can be be specified by repeating the option,"
+            " e.g.: \"-n '*.log -n *.run.log -n *.screen.log'\","
+            " in which case the files or directories with basenames that"
+            " match *any* of the specified glob patterns will be included."
+            " Files and directories with names that do not match any of the"
+            " glob patterns will excluded, unless specifically included"
+            " through other target criteria.")
+    custom_filtering_options_group.add_argument(
+            "-D", "--exclude-dir-patterns",
+            action="append",
+            metavar="PATTERN",
+            dest="dirs_to_exclude",
+            help="Regular expression patterns to be matched to directory "
+            "names(s) to exclude. Multiple path patterns may be specified "
+            "by repeating the option, e.g.: '-D path1 -D path2 -D path3'.")
+    custom_filtering_options_group.add_argument(
+            "-F", "--exclude-file-patterns",
+            action="append",
+            metavar="PATTERN",
+            dest="files_to_exclude",
+            help="Regular expression patterns to be matched to filename(s) "
+            "to exclude. Multiple path patterns may be specified by "
+            "repeating the option, e.g.: '-F path1 -F path2 -F path3'.")
+    custom_filtering_options_group.add_argument(
+            "-a", "--include-hidden",
+            action="store_true",
+            default=False,
+            help="Do not filter out hidden files and directories "
+            "(by default, these are filtered out).")
+    custom_filtering_options_group.add_argument(
+            "--include-gitignores",
+            action="store_true",
+            default=False,
+            help="Do not filter out paths specified in '.gitignore' "
+            "(by default, these are filtered out).")
+
+    action_group_section = parser.add_argument_group("Action Options")
+    action_group = action_group_section.add_mutually_exclusive_group()
+    action_group.add_argument(
+            "-E", "--edit",
+            action="store_const",
+            dest="action_type",
+            const="edit",
+            help="[DEFAULT] Opens selected file or directory for editing "
+            "(with editor program specified by, in order of resolution, "
+            "'$FUZZYSNAKE_EDITOR' or '$EDITOR').")
+    action_group.add_argument(
+            "-p", "--print",
+            action=SetPrintAction,
+            dest="action_type",
+            metavar="FILEPATH",
+            help="Prints the selected file or directory name(s) to FILEPATH.")
+    action_group.add_argument(
+            "--stdout",
+            action=SetPrintAction,
+            dest="action_type",
+            nargs=0,
+            metavar="FILEPATH",
+            help="Prints the selected file or directory name(s) to standard output.")
+    action_group.add_argument(
+            "-o", "--open",
+            action="store_const",
+            dest="action_type",
+            const="open",
+            help="Passes the selected file or directory path as an argument to the 'open' command.")
+    action_group.add_argument(
+            "-c", "--execute-command",
+            action=SetCustomCommandAction,
+            dest="action_type",
+            metavar="COMMAND",
+            help="Execute `COMMAND` with the selected file or directory path name as an argument. "
+            "If the token '{}' occurs in the COMMAND string, it will be replaced with the "
+            "selected file or directory path name. If this token is not found in the COMMAND "
+            "string, then the execution string will be COMMAND as-is followed by the selected "
+            "file or directory path name.")
+    action_group.add_argument(
+            "-L", "--list-and-exit",
+            action="store_const",
+            dest="action_type",
+            const="list-and-exit",
+            help="[SPECIAL] Instead of listing the names of files and directories found for "
+            "you to select a particular one, print the names to standard output. This option "
+            "allows you to do, e.g., 'vim $(fz -L --python src/)' to quickly open all the "
+            "Python files in the 'src/' subdirectory)")
+
+    output_options_section = parser.add_argument_group("Output Options")
+    output_options_section.add_argument(
+            "-t", "--name-terminator",
+            default="\n",
+            help=(
+                "Character(s) to print after each file or directory name(s)"
+                " when executing '--stdout', '-p'/'--print', or"
+                " '-L'/'--list-and-exit' actions. You can specify 'NUL' by '\0',"
+                " the tab character by '\t', newline by '\n'."
+                ))
+    output_options_section.add_argument(
+            "--output-relative-paths",
+            action="store_true",
+            help=(
+                "Print relative paths instead of absolute"
+                " when executing '--stdout', '-p'/'--print', or"
+                " '-L'/'--list-and-exit' actions."
+                ))
+    output_options_section.add_argument(
+            "--echo-selection-to-stderr",
+            action="store_true",
+            help=(
+                "Write selection to standard error"
+                " when executing '--stdout', '-p'/'--print', or"
+                " '-L'/'--list-and-exit' actions."
+                ))
+    output_options_section.add_argument(
+            "--echo-action-to-stderr",
+            action="store_true",
+            help="Write action commands to standard error.")
+    parser.set_defaults(action_type="edit")
+    args = parser.parse_args()
+
+    if args.name_terminator is not None:
+        if args.name_terminator == r'\0':
+            args.name_terminator = chr(0)
+        elif args.name_terminator == r'\t':
+            args.name_terminator = "\t"
+        elif args.name_terminator == r'\n':
+            args.name_terminator = "\n"
+        # elif args.name_terminator == r'\|':
+        #     args.name_terminator = "|"
+        # elif args.name_terminator == r'\\\\':
+        #     args.name_terminator = r'\\'
+
+    return args
+# }}}2
+
+class SetPrintAction(argparse.Action): # {{{2
+    def __call__(self,
+            parser,
+            namespace,
+            values,
+            option_string=None):
+        namespace.action_type = "print"
+        if option_string == "--stdout":
+            namespace.action_target = "-"
+        else:
+            namespace.action_target = values
+# }}}2
+
+class SetCustomCommandAction(argparse.Action): # {{{2
+    def __call__(self,
+            parser,
+            namespace,
+            values,
+            option_string=None):
+        namespace.action_type = "command"
+        namespace.action_target = values
+# }}}2
+
+# }}}1
+
+def main(): # {{{1
+    args = parse_cli_args()
+    with Subscreen() as subscreen:
+        controller = Controller(subscreen=subscreen, args=args)
+        try:
+            if args.action_type == "list-and-exit":
+                num_items = controller.print_list()
+            else:
+                num_items = controller.run()
+        except KeyboardInterrupt:
+            num_items = 0
+    if not num_items:
+        sys.exit(1)
+    else:
+        sys.exit(0)
+# }}}1
+
+if __name__ == '__main__': # {{{1
+    main()
+# }}}1
+

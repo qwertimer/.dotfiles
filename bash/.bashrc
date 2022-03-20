@@ -242,6 +242,9 @@ fi
 export FZF_DEFAULT_COMMAND='fd . -path './.git' -prune -o -print $HOME'
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 
+
+
+
 _fzf_comprun() {
   local command=$1
   shift
@@ -268,6 +271,7 @@ if [ -d ~/.bash_completion.d ]; then
     done
 fi
 
+[ -f ~/.fztricks.bash ] && source ~/.fztricks.bash
 
 # -------------------------------- completion --------------------------------
 

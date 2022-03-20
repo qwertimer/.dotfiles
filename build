@@ -5,6 +5,7 @@
 
 set -e 
 
+DOT=$(pwd)
 
 x__pathappend() {
   for ARG in "$@"; do
@@ -36,6 +37,7 @@ x_scriptslink() {
 
 
 x_addDirs() {
+    mkdir -p $HOME/.sshrc.d
     mkdir -p $HOME/.local/share/ansible
     mkdir -p $HOME/.bash_completion.d
     mkdir -p $HOME/.config/bspwm
@@ -51,54 +53,61 @@ x_symlinks() {
 
   # Create symlinks.
   echo "Creating Symlinks"
-  DOT=$PWD
+  echo $DOT
 # ----------------------------------- bash -----------------------------------
-
-## Change to 
   ln -sf "$DOT/bash/" "$HOME/"
 # --------------------------------- dircolors --------------------------------
   ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
-
-# ------------------------------------ git -----------------------------------
-  #ln -sf "$DOT/git" "$HOME/git"
-  ln -sf "$DOT/gh/.gh_comp" "$HOME/"
 # ----------------------------------- tmux -----------------------------------
   ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
-
 # ------------------------------------ vim -----------------------------------
-  VIM_FOLDER="$HOME/.vim/"
   ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
-
-# ----------------------------- xmonad and xmobar ----------------------------
-  XMOBAR_FOLDER="$HOME/.config"
-  #test -d ~/.config || mkdir ~/.config
-  #ln -sf "$DOT/xmonad" "$XMOBAR_FOLDER/"
-  #ln -sf "$DOT/xmobar" "$XMOBAR_FOLDER/"
-
-# ------------------------------ x system utils ------------------------------
-  #ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
-  #ln -sf "$DOT/x/.Xresources" "$HOME/.Xresources"
-
+  ln -sf "$DOT/vim/.vimrc" "$HOME/.sshrc.d"
 # ---------------------------------- lsxhkd ----------------------------------
-  test -d ~/.config/sxhkd || mkdir ~/.config/sxhkd
-  ln -sf "$DOT/sxhkd/" "$HOME/.config/"
+  ln -sf "$DOT/.config/sxhkd/" "$HOME/.config/"
+
+  x_wm_syms
+  x_comp_syms
+}
+
+
+# ---------------------------- Additional symlinks ---------------------------
+x_xsysutils_syms() {
+
+  ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
+  ln -sf "$DOT/x/.Xresources" "$HOME/.Xresources"
+}
+
+x_wm_syms() {
+  #bspwm
+
+  ln -sf "$DOT/.config/bspwm" "$HOME/.config"
+
+  #ln -sf "$DOT/.config/sxhkd" "$HOME/.config"
+  ln -sf "$DOT/.config/polybar" "$HOME/.config"
+  #xmonad
+
+}
+
+x_fz_tools() {
+  ln -sf "$DOT/bash/fztricks-bash" "$HOME/fztricks-bash"
+  ln -sf "$DOT/bash/.fztricks.bash" "$HOME/.fztricks.bash"
+}
+
+x_comp_syms() {
 
 # ---------------------------- ansible_completion ----------------------------
-  ansible_comp="$HOME/.local/share/ansible/"
-  test -d "$ansible_comp" || mkdir -p "$ansible_comp"
   ln -sf "$DOT/completions/ansible-completion/" "$HOME/.local/share/ansible/ansible-completion"
 
 # -------------------------------- Completions -------------------------------
 
-  comp="$HOME/.bash_completion.d/"
-  test -d "$comp" || mkdir -p "$comp"
   ln -sf "$DOT/completions/z.sh" "$HOME/.bash_completion.d/z.sh"
   ln -sf "$DOT/completions/fz.sh" "$HOME/.bash_completion.d/fz.sh"
+  ln -sf "$DOT/completions/gh/.gh_comp" "$HOME/"
 }
 
-
 x_install() {
-  exec ./installs/install_main
+  :
 }
 
 x_usage() {

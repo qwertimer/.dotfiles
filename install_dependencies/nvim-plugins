@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+
+load_nvim_plugins() {
+  git submodule init
+  git submodule update --recursive
+}
+
+load_nvim_plugins
