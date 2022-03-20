@@ -26,7 +26,7 @@ _source_if() { [[ -r "$1" ]] && source "$1"; }
 
 
 # Folders
-export USER="tim"
+export USER="qwertimer"
 export GITUSER="qwertimer"
 export DESKTOP="$HOME/Desktop"
 export DOCUMENTS="$HOME/Documents"
@@ -36,7 +36,7 @@ export MUSIC="$HOME/Music"
 export VIDEOS="$HOME/Videos"
 export GHREPOS="$HOME/repos/github.com/$GITUSER"
 export DOTFILES="$GHREPOS/.dotfiles"
-#export ZETDIR="$GHREPOS/zet"
+export ZETDIR="$GHREPOS/zet"
 export SNIPPETS="$DOTFILES/snippets"
 export TASKS="$DOTFILES/tasks"
 export SCRIPTS="$HOME/.local/bin/scripts"
@@ -242,9 +242,6 @@ fi
 export FZF_DEFAULT_COMMAND='fd . -path './.git' -prune -o -print $HOME'
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 
-
-
-
 _fzf_comprun() {
   local command=$1
   shift
@@ -271,7 +268,6 @@ if [ -d ~/.bash_completion.d ]; then
     done
 fi
 
-[ -f ~/.fztricks.bash ] && source ~/.fztricks.bash
 
 # -------------------------------- completion --------------------------------
 
@@ -302,6 +298,8 @@ if command -v theme > /dev/null; then
 fi
 
 # --------------------------------- aliases  ---------------------------------
+
+alias ldir="ls -d */"
 
 #Make ip have colours
 alias ip='ip -br -c'
@@ -419,5 +417,3 @@ _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansib
 	-W "$(grep "^Host" ~/.ssh/config | \
 	grep -v "[?*]" | cut -d " " -f2 | \
 	tr ' ' '\n')" scp sftp ssh
-
-PATH=/home/tim/gems/bin:/home/tim/.local/bin/scripts:/home/tim/.local/bin:/home/tim/.local/share/go/bin:/bin:/usr/local/games:/usr/local/bin:/usr/local/sbin:/usr/games:/usr/sbin:/usr/bin:/snap/bin:/sbin:/bin:/usr/local/go/bin:/usr/local/go/bin
