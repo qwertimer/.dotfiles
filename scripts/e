@@ -3,6 +3,9 @@
 #Description: Fast edit of configuration files. Does not crowd aliases and is available anywhere my scripts are.
 check() {
   case $1 in
+    a | ala*)
+      file="$HOME/.config/alacritty/alacritty.yml"
+      ;;
     bash | b)
       file="$HOME/.bashrc"
       ;;
@@ -10,7 +13,7 @@ check() {
       file="$HOME/.vimrc"
       ;;
 
-    sxhkd)
+    s)
       file="$HOME/.config/sxhkd/sxhkdrc"
       ;;
 
@@ -22,6 +25,10 @@ check() {
       ;;
     l)
       file=lol
+      ;;
+
+    p | poly*)
+      file="$HOME/.config/polybar/config"
       ;;
   esac
   _is_file "$file" && edit "$file" || exit
