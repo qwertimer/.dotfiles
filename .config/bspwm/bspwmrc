@@ -4,8 +4,8 @@
 "$HOME/.config/bspwm/clean" &
 
 #Start polybar first
-bash ~/.config/polybar/launch.sh --hack &
-feh --bg-fill ~/Pictures/background.jpg &
+bash ~/.config/polybar/launch.sh --shades &
+feh --bg-fill --randomize ~/Pictures/* &
 picom &
 
 # Variable Defines

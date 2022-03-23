@@ -271,7 +271,7 @@ if [ -d ~/.bash_completion.d ]; then
     done
 fi
 
-[ -f ~/.fztricks.bash ] && source ~/.fztricks.bash
+[ -f ~/.fztricks.bash ] && source ~/.fztricks.bash && alias fz="fz -a"
 
 # -------------------------------- completion --------------------------------
 

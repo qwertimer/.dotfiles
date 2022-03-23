@@ -1,0 +1,8 @@
+#!/bin/sh
+
+#This program is great with tiramisu and polytiramisu.
+
+notify-send "Tailscale systems"
+tailscale status | awk '{print $2 " " $1}'| \
+while read OUTPUT; do 
+  notify-send "$OUTPUT"; done
