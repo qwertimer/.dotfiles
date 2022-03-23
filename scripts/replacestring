@@ -1,0 +1,7 @@
+#!/bin/bash
+old_string="$1"
+new_string="$2"
+shift 2
+echo $old_string
+echo $new_string
+perl -pi.bak -e 's/$old_string/$new_string/g' "$@"

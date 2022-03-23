@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import sys
+import os
+# Program will send the current command to explainshell.com and provide
+# you with an overview of the command. The default command opens up the
+# website and pastes your command in the page. The -c flag will open the
+# result in lynx
+
+#catch flag -c for command line
+#no flag defualt web search
+
+search_term = str(sys.argv[1:])
+os.system("xdg-open "+ "https://www.explainshell.com/explain?cmd=" +search_term)
+
+
+
