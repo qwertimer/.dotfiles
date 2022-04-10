@@ -269,6 +269,7 @@ if [ -d ~/.bash_completion.d ]; then
 fi
 
 
+source ~/.fztricks.bash
 # -------------------------------- completion --------------------------------
 
 # enable programmable completion features (you don't need to enable
@@ -417,3 +418,10 @@ _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansib
 	-W "$(grep "^Host" ~/.ssh/config | \
 	grep -v "[?*]" | cut -d " " -f2 | \
 	tr ' ' '\n')" scp sftp ssh
+
+
+
+#Fun note on each open
+echo "=======================" | lolcat
+learn | lolcat
+echo "======================="| lolcat

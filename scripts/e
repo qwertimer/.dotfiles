@@ -13,11 +13,7 @@ check() {
       file="$HOME/.vimrc"
       ;;
 
-<<<<<<< HEAD
-    s)
-=======
     sxhkd | s)
->>>>>>> 33db0a1 (Commits from laptop)
       file="$HOME/.config/sxhkd/sxhkdrc"
       ;;
 

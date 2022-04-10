@@ -1,3 +1,0 @@
-#!/bin/sh
-links2 -http.do-not-track 1 -html-tables 1 -html-numbered-links 1\
-		http://duckduckgo.com/?q="$*"

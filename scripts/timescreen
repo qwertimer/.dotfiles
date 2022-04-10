@@ -1,3 +1,0 @@
-#!/bin/sh
-
-watch -n 1 -t /bin/date # | figlet | lolcat
