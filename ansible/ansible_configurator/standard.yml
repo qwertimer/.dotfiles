@@ -1,0 +1,21 @@
+- hosts: localhost
+  connection: local
+  become: true
+
+  pre_tasks:
+    - name: update repositories
+      ansible.builtin.package:
+        update_cache: yes
+      changed_when: False
+
+  tasks:
+
+    - include: tasks/ansible_user.yml
+    - include: tasks/cron.yml
+    - include: tasks/packages.yml
+    - include: tasks/git.yml
+    - include: tasks/dot.yml
+
+  tags:
+    - standard
+

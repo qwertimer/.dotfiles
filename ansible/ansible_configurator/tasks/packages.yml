@@ -1,0 +1,14 @@
+   - name: install packages
+     package:
+       name:
+         - curl
+         - wget
+         - sxhkd
+         - python3-pip
+         - python3-dev
+         - moreutils
+         - htop
+         - tmux
+         - tldr
+         - ripgrep
+

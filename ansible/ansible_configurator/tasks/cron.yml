@@ -1,0 +1,8 @@
+- name: add ansible-pull cron job
+  cron:
+    name: ansible auto-provision
+    vars_files:
+      - ../vars/vars
+    user: velociraptor
+    minute: "*/10"
+    job: ansible-pull -o -U https://github.com/qwertimer/ansible_configurator.git {{ type }} > /dev/null
