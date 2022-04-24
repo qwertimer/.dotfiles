@@ -8,7 +8,6 @@ case $- in
     *i*) ;;
       *) return;;
 esac
-
 # ----------------------------- utility functions ----------------------------
 _have()      { type "$1" &>/dev/null; }
 _source_if() { [[ -r "$1" ]] && source "$1"; }
@@ -165,8 +164,6 @@ pathprepend() {
   done
 }
 
-
-
 pathremove() {
     declare arg
     for arg in "$@"; do
@@ -186,7 +183,8 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 pathprepend \
   ~/.local/bin \
   "$SCRIPTS" \
-  ~/.poetry/bin
+  ~/.poetry/bin \
+  /usr/local/go/bin
 
 pathappend \
       /usr/local/opt/coreutils/libexec/gnubin \
@@ -208,7 +206,6 @@ export CDPATH=.:\
 ~/repos/github.com/$GITUSER/dot:\
 ~/repos:\
 /media/$USER:\
-/mnt/SSD:\
 ~/.local/bin:\
 ~
 
@@ -225,12 +222,7 @@ test -n "$DISPLAY" && setxkbmap -option caps:escape &>/dev/null
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
-    #alias grep='grep --color=auto'
-    #alias fgrep='fgrep --color=auto'
-    #alias egrep='egrep --color=auto'
+    alias grep='grep --color=auto'
 fi
 
 # ------------------------------- source files -------------------------------
@@ -262,7 +254,6 @@ export PATH="$HOME/gems/bin:$PATH"
 
 ## Source all required files in completions folder.
 if [ -d ~/.bash_completion.d ]; then
-    echo "bash completions added"
     for file in ~/.bash_completion.d/*; do
         . $file
     done
@@ -283,20 +274,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# ---------------------------------- theming ---------------------------------
-
-#theme script from https://github.com/lemnos/theme.sh stored in scripts folder
-if command -v theme > /dev/null; then
-	export THEME_HISTFILE=~/.theme_history
-	[ -e "$THEME_HISTFILE" ] && theme "$(theme -l|tail -n1)"
-
-	# Optional
-
-	bind -x '"\x0f":"theme $(theme -l|tail -n2|head -n1)"' #Binds C-o to the previously active theme.
-	alias th='theme -i'
-	alias thl='theme --light -i'
-	alias thd='theme --dark -i'
-fi
 
 # --------------------------------- aliases  ---------------------------------
 
@@ -310,7 +287,6 @@ alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
 alias tasks='cd $TASKS'
 alias zets='cd ~/.local/share/zet/'
-alias whale='cd /mnt/SSD/Masters/Datasets/null'
 alias snippets='cd "$SNIPPETS"'
 
 #lynx search
@@ -331,15 +307,6 @@ alias ct="taskman closetask"
 alias vt="taskman viewtask"
 alias ifu="ifuse ~/iphone"
 
-# Interactive --- make sure you don't overwirte things.
-alias mv='mv -i'
-alias cp='cp -i'
-alias rm='rm -i'
-alias ln='ln -i'
-alias please="sudo !! "
-
-alias walls="cd ~/.local/share/wallhaven"
-
 alias view="vi -R"
 alias sshh='sshpass -f $HOME/.sshpass ssh '
 alias temp='cd $(mktemp -d)'
@@ -349,7 +316,6 @@ alias bat=batcat
 #source bash
 alias sb=". ~/.bashrc"
 
-#wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
 # ------------------------- personalised completions -------------------------
 
 owncomp=(

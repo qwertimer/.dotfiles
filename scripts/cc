@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "'''¯\_(ツ)_/¯'''" > $HOME/.cache/greenclip.history

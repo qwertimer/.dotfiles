@@ -1,0 +1,42 @@
+#!/bin/bash
+
+#id=$(xdotool search --limit 1 --classname "audacious") 
+#ids=($(xdo id -a 'Telegram (1)'))
+#ids=($(wmctrl -l | awk '/Spotify$/ {print $1}'))
+#id="${ids[0]}"
+id=$(xdotool search --limit 1 --classname "spotify") 
+#ids=($(wmctrl -l | awk '/Spotify Free$/ {print $1}'))
+
+update_desk() {
+    echo "$(bspc query -D -d focused)" > "/tmp/spotify-lastdesk"
+}
+
+if [ -z "${id}" ]; then
+    LD_PRELOAD=/home/andrey/local/lib/spotify-adblock.so spotify &
+    sleep .2
+    id=$(xdotool search --limit 1 --classname "spotify") 
+    echo "foo";
+    bspc node -t floating; 
+    bspc node -l above; 
+
+    # echo "$id";
+    xdotool windowsize $id 800 600;
+    xdotool windowmove $id 0 170;
+
+    update_desk
+
+    exit 0;
+fi
+
+
+lastdesk="$(cat "/tmp/spotify-lastdesk")"
+currdesk="$(bspc query -D -d focused)"
+
+
+if [ "$lastdesk" = "$currdesk" ]; then
+    bspc node "$id" --flag hidden --focus
+else
+    bspc node "$id" -g hidden=off --to-desktop focused --focus
+    update_desk
+fi
+

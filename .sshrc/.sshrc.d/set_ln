@@ -1,0 +1,4 @@
+#set the correct location for the symlinks
+ln -s /home/$(whoami)/repos/github.com/qwertimer/.dotfiles/bash/fztricks-bash/ /home/$(whoami)/repos/github.com/qwertimer/.dotfiles/.sshrc/.sshrc.d/fztricks-bash
+
+ln -s /home/$(whoami)/repos/github.com/qwertimer/.dotfiles/bash/fztricks-bash/ /home/$(whoami)/repos/github.com/qwertimer/.dotfiles/.sshrc/.sshrc.d/fztricks-bash

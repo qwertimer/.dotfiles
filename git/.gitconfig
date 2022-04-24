@@ -1,26 +1,18 @@
-[user]
-	email = delltim@gmail.com
-	name = qwertimer
-[credential]
-    helper = cache --timeout=3600
-[init]
-    templateDir=~/git-templates
-[url "git@github.com:"]
-	insteadOf = https://github.com/
-[merge]
-	tool = meld
-[mergetool "meld"]
-  # Choose one of these 2 lines (not both!) explained below.
-	cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+# ~/.gitconfig
+[core]
+  excludesfile = ~/.gitignore      # valid everywhere
+  pager = less
+  editor = vim
+
 [diff]
   tool = meld
-[difftool]
-  prompt = false
-[difftool "meld"]
-  cmd = meld "$LOCAL" "$REMOTE"
-[aliases]
-	aliases = !git config --get-regexp alias | sed -re 's/alias\\.(\\S*)\\s(.*)$/\\1 = \\2/g'
-	ci = commit
-  co = checkout
-	st = status
-  
+  colorMoved =  zebra
+
+[merge]
+  tool = meld
+
+[includeIf "gitdir:~/repos/github.com/qwertimer/"]
+path = ~/repos/github.com/qwertimer/.gitconfig-pers
+ 
+[includeIf "gitdir:~/repos/github.com/tim-flux/"]
+path = ~/repos/github.com/tim-flux/.gitconfig-work

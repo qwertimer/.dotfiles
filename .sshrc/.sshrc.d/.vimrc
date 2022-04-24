@@ -1,1 +1,1 @@
-/home/tim/repos/github.com/qwertimer/.dotfiles/vim/.vimrc
+/home/qwertimer/repos/github.com/qwertimer/.dotfiles/vim/.vimrc

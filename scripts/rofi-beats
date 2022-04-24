@@ -13,7 +13,7 @@ menu(){
 	printf "4: The Bootleg Boy\n"
 	printf "5: Radio Spinner\n"
 	printf "6: SmoothChill\n"
-    printf "7: Rob\n"
+  printf "7: Rob\n"
 	printf "8: Hope 103.2\n"
 	printf "9: Hope Christmas\n"
 	printf "10: Christmas Songs\n"
@@ -59,7 +59,7 @@ main() {
 			break
 			;;
 		8)
-			mpv "https://stream.hopemedia.com.au/hope-mp3"
+			mpv "https://stream.hopemedia.com.au/hope-mp3" >/dev/null
 			break
 			;;
 			
@@ -74,10 +74,11 @@ main() {
 			;;
 
 		11)
-			mpv "https://www.youtube.com/watch?v=75LR1d9_mtM" --no-video
+			mpv "https://www.youtube.com/watch?v=75LR1d9_mtM" --no-video >/dev/null &
 			break
 			;;
 	esac
 }
 
-pkill -f http || main
+pkill mpv 
+main

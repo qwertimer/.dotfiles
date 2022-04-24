@@ -256,7 +256,7 @@ if $COLORTERM == 'alacritty'
 endif
 
 set background=dark
-colorscheme elflord
+colorscheme onedark
 
 " Set extra options when running in GUI mode
 if has("gui_running")

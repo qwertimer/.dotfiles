@@ -40,7 +40,7 @@ case "$choice" in
         choice="$HOME/.config/sxhkd/sxhkdrc"
         ;;
     vim)
-        choice="$HOME/.config/vim/.vimrc"
+        choice="$HOME/.vimrc"
         ;;
     xresources)
         choice="$HOME/.Xresources"
