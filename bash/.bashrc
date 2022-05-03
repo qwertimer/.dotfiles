@@ -12,20 +12,12 @@ esac
 _have()      { type "$1" &>/dev/null; }
 _source_if() { [[ -r "$1" ]] && source "$1"; }
 
-# --------------------------- Start tmux on startup --------------------------
-
-# if tmux is executable and not inside a tmux session, then try to attach.
-# if attachment fails, start a new session
-#[ -x "$(command -v tmux)" ] \
-#  && [ -z "${TMUX}" ] \
-#  && { tmux attach || tmux; } >/dev/null 2>&1
-
 # --------------------------- environment variables --------------------------
 #                           (also see envx)
 
 
 # Folders
-export USER="qwertimer"
+export USER=$(whoami)
 export GITUSER="qwertimer"
 export DESKTOP="$HOME/Desktop"
 export DOCUMENTS="$HOME/Documents"
@@ -62,7 +54,8 @@ export HELP_BROWSER=lynx
 #export GREP_OPTIONS=' — color=auto'
 
 # ------------------------ programmming env variables ------------------------
-export PYTHONDONTWRITEBYTECODE=1
+
+export PYTHONDONTWRITEBYTECODE=1 # stops auto running .pyc
 
 test -d ~/.vim/spell && export VIMSPELL=(~/.vim/spell/*.add)
 
@@ -86,8 +79,8 @@ alias vi=vim
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=10000
+HISTFILESIZE=20000
 set -o vi
 
 
@@ -139,7 +132,7 @@ fi
 
 # --------------------------- smart prompt ---------------------------
 #. ~/.ps1_christmas
-. ~/.bash_prompt
+#. ~/.bash_prompt
 #. ~/.ps1_jfrazelle
 #PROMPT_COMMAND="__ps1"
 # ------------------------- Path add/remove functions ------------------------
@@ -202,10 +195,6 @@ pathappend \
 
 export CDPATH=.:\
 ~/repos/github.com:\
-~/repos/github.com/$GITUSER:\
-~/repos/github.com/$GITUSER/dot:\
-~/repos:\
-/media/$USER:\
 ~/.local/bin:\
 ~
 
@@ -245,22 +234,9 @@ _fzf_comprun() {
     *)            fzf "$@" ;;
   esac
 }
-#if [ -f ~/.bashrc-personal ]; then
-#. ~/.bashrc-personal
-#fi
-#source "$HOME/.cargo/env"
 export PATH="$HOME/gems/bin:$PATH"
 
 
-## Source all required files in completions folder.
-if [ -d ~/.bash_completion.d ]; then
-    for file in ~/.bash_completion.d/*; do
-        . $file
-    done
-fi
-
-
-source ~/.fztricks.bash
 # -------------------------------- completion --------------------------------
 
 # enable programmable completion features (you don't need to enable
@@ -275,6 +251,15 @@ if ! shopt -oq posix; then
 fi
 
 
+## Source all required files in completions folder.
+if [ -d ~/.bash_completion.d ]; then
+    for file in ~/.bash_completion.d/*; do
+        . $file
+    done
+fi
+
+
+source ~/.fztricks.bash
 # --------------------------------- aliases  ---------------------------------
 
 alias ldir="ls -d */"
@@ -321,7 +306,7 @@ alias sb=". ~/.bashrc"
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
-  venvwrap n dockerfunc
+  venvwrap n .dockerfunc
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
@@ -345,14 +330,6 @@ export FZF_CTRL_R_OPTS='--sort --exact'
 
 # --------------- personal, work and environment configurations --------------
 
-if [ -f ~/.bashrc_envs ]; then
-    . ~/.bashrc_envs
-fi
-
-if [[ -f ~/.bashrc_aliases ]]; then
-    . ~/.bashrc_aliases
-fi
-
 for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
 	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
 done
@@ -365,13 +342,7 @@ _source_if "/etc/profile.d/bash_completion.sh"
 
 _have gh && . <(gh completion -s bash)
 _have pandoc && . <(pandoc --bash-completion)
-_have kubectl && . <(kubectl completion bash)
-_have k && complete -o default -F __start_kubectl k
-_have kind && . <(kind completion bash)
 _have yq && . <(yq shell-completion bash)
-_have helm && . <(helm completion bash)
-_have minikube && . <(minikube completion bash)
-_have mk && complete -o default -F __start_minikube mk
 _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
