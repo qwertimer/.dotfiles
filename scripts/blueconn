@@ -1,0 +1,4 @@
+#!/bin/sh
+options=$(bluetoothctl paired-devices)
+choice=$(echo "${options}" | rofi -dmenu -p 'bluetooth')
+echo $choice | awk '{print $2}' | xargs bluetoothctl connect 

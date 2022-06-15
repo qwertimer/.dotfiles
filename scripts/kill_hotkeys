@@ -1,0 +1,19 @@
+#!/bin/sh
+
+gsettings list-recursively org.gnome.desktop.wm.keybindings | 
+    perl -pe 's/(.*)\s*(\[.*?\])\s*$/$1\t$2\n/' | 
+        while IFS=$'\t' read -r key val; do gsettings set $key ['']; done
+gsettings set org.gnome.shell.extensions.dash-to-dock hot-keys false
+gsettings set org.gnome.shell.keybindings switch-to-application-1 []
+gsettings set org.gnome.shell.keybindings switch-to-application-2 []
+gsettings set org.gnome.shell.keybindings switch-to-application-3 []
+gsettings set org.gnome.shell.keybindings switch-to-application-4 []
+gsettings set org.gnome.shell.keybindings switch-to-application-5 []
+gsettings set org.gnome.shell.keybindings switch-to-application-6 []
+gsettings set org.gnome.shell.keybindings switch-to-application-7 []
+gsettings set org.gnome.shell.keybindings switch-to-application-8 []
+gsettings set org.gnome.shell.keybindings switch-to-application-9 []
+gsettings list-keys org.gnome.shell.keybindings | xargs -I@ gsettings set org.gnome.shell.keybindings @ ['']
+gsettings list-keys org.gnome.mutter.keybindings | xargs -I@ gsettings set org.gnome.mutter.keybindings @ ['']
+gsettings list-keys org.gnome.settings-daemon.plugins.media-keys | xargs -I@ gsettings set org.gnome.settings-daemon.plugins.media-keys @ ['']
+gsettings set org.gnome.mutter overlay-key ''
