@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Produces a centered title in the middle of a horizontal rule of text.
-
+pre=${2-#}
 _filter(){
   [[ -n "$1" ]] && return 1
   while IFS= read -ra args; do
@@ -11,13 +11,18 @@ _filter(){
 
 htitle() {
   _filter "$@" && return $?
-  local str="$1"
-  local -i len=${#str}
-  local -i side=$((((HRULEWIDTH / 2) - len / 2) - 3))
-  local -i left=$side
-  local -i right=$side
-  (( len % 2 == 1 )) && ((right -= 1))
-  echo "# $(echon '-' $left) $str $(echon '-' $right)"
+
+  while IFS= read -r line; do 
+    local str="$line"
+    local -i len=${#str}
+    local -i side=$((((HRULEWIDTH / 2) - len / 2) - 3))
+    local -i left=$side
+    local -i right=$side
+    (( len % 2 == 1 )) && ((right -= 1))
+    echo "$pre $(echon '-' $left) $str $(echon '-' $right)"
+  done
 }
 
 htitle "$@"
+
+

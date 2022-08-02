@@ -1,0 +1,60 @@
+- name: install packages
+  package:
+    name:
+      - curl
+      - wget
+
+      - mpv
+      - vlc
+     
+      - netctl
+      - wpa-supplicant
+      - dialog
+      
+      - xclip
+ 
+      - sxhkd
+      # python tools
+      - python3-pip
+      - python3-dev
+      # Other tools
+      - moreutils
+      - htop
+      - tmux
+      - tldr
+      - ripgrep
+
+      - dmenu
+      - rxvt-unicode
+      - libnotify
+      - dunst
+
+
+- name: Install bspwm tools
+  package:
+    name:
+      - polybar
+      - picom
+      - bspwm
+
+- name: Install additional tools
+  package:
+    name:
+      - pass
+
+      # Mail
+      - mutt
+      - w3m
+      - msmtp
+
+      # Photos
+      - gimp
+      - imagemagick
+      - ghostscript  # imagemagick optdepends
+
+      # Music
+      - mpd
+      - mpc
+      - easytag
+
+

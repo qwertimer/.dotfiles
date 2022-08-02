@@ -8,7 +8,6 @@ case $- in
     *i*) ;;
       *) return;;
 esac
-
 # ----------------------------- utility functions ----------------------------
 _have()      { type "$1" &>/dev/null; }
 _source_if() { [[ -r "$1" ]] && source "$1"; }
@@ -65,7 +64,7 @@ export HELP_BROWSER=lynx
 # ------------------------ programmming env variables ------------------------
 export PYTHONDONTWRITEBYTECODE=1
 
-test -d ~/.vim/spell && export VIMSPELL=(~/.vim/spell/*.add)
+test -d ~/.vim/spell && export VIMSPELL="~/.vim/spell/*.add"
 
 export GOPRIVATE="github.com/$GITUSER/*,gitlab.com/$GITUSER/*"
 export GOPATH=~/.local/share/go
@@ -87,8 +86,8 @@ alias vi=vim
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=10000
+HISTFILESIZE=20000
 set -o vi
 
 
@@ -165,8 +164,6 @@ pathprepend() {
   done
 }
 
-
-
 pathremove() {
     declare arg
     for arg in "$@"; do
@@ -186,11 +183,11 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 pathprepend \
   ~/.local/bin \
   "$SCRIPTS" \
-  ~/.poetry/bin
+  ~/.poetry/bin \
+  /usr/local/go/bin
 
 pathappend \
       /usr/local/opt/coreutils/libexec/gnubin \
-      /mingw64/bin \
       /usr/local/bin \
       /usr/local/sbin \
       /usr/games \
@@ -198,6 +195,7 @@ pathappend \
       /usr/bin \
       /snap/bin \
       /sbin \
+      ~/.emacs.d/bin \
       /bin
 
 # ---------------------------------- CDPATH ---------------------------------
@@ -205,10 +203,7 @@ pathappend \
 export CDPATH=.:\
 ~/repos/github.com:\
 ~/repos/github.com/$GITUSER:\
-~/repos/github.com/$GITUSER/dot:\
-~/repos:\
 /media/$USER:\
-/mnt/SSD:\
 ~/.local/bin:\
 ~
 
@@ -225,14 +220,10 @@ test -n "$DISPLAY" && setxkbmap -option caps:escape &>/dev/null
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
-    #alias grep='grep --color=auto'
-    #alias fgrep='fgrep --color=auto'
-    #alias egrep='egrep --color=auto'
+    alias grep='grep --color=auto'
 fi
 
+_have ncdu && alias ncdu="ncdu --color=dark"
 # ------------------------------- source files -------------------------------
 
 #fzf stuff
@@ -262,7 +253,6 @@ export PATH="$HOME/gems/bin:$PATH"
 
 ## Source all required files in completions folder.
 if [ -d ~/.bash_completion.d ]; then
-    echo "bash completions added"
     for file in ~/.bash_completion.d/*; do
         . $file
     done
@@ -270,6 +260,7 @@ fi
 
 [ -f ~/.fztricks.bash ] && source ~/.fztricks.bash && alias fz="fz -a"
 
+source ~/.fztricks.bash
 # -------------------------------- completion --------------------------------
 
 # enable programmable completion features (you don't need to enable
@@ -283,20 +274,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# ---------------------------------- theming ---------------------------------
-
-#theme script from https://github.com/lemnos/theme.sh stored in scripts folder
-if command -v theme > /dev/null; then
-	export THEME_HISTFILE=~/.theme_history
-	[ -e "$THEME_HISTFILE" ] && theme "$(theme -l|tail -n1)"
-
-	# Optional
-
-	bind -x '"\x0f":"theme $(theme -l|tail -n2|head -n1)"' #Binds C-o to the previously active theme.
-	alias th='theme -i'
-	alias thl='theme --light -i'
-	alias thd='theme --dark -i'
-fi
 
 # --------------------------------- aliases  ---------------------------------
 
@@ -310,7 +287,6 @@ alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
 alias tasks='cd $TASKS'
 alias zets='cd ~/.local/share/zet/'
-alias whale='cd /mnt/SSD/Masters/Datasets/null'
 alias snippets='cd "$SNIPPETS"'
 
 #lynx search
@@ -331,15 +307,6 @@ alias ct="taskman closetask"
 alias vt="taskman viewtask"
 alias ifu="ifuse ~/iphone"
 
-# Interactive --- make sure you don't overwirte things.
-alias mv='mv -i'
-alias cp='cp -i'
-alias rm='rm -i'
-alias ln='ln -i'
-alias please="sudo !! "
-
-alias walls="cd ~/.local/share/wallhaven"
-
 alias view="vi -R"
 alias sshh='sshpass -f $HOME/.sshpass ssh '
 alias temp='cd $(mktemp -d)'
@@ -348,8 +315,8 @@ alias temp='cd $(mktemp -d)'
 alias bat=batcat
 #source bash
 alias sb=". ~/.bashrc"
-
-#wal='/dev/null << wal -i ~/wallpapers/wallpapers/'
+alias v=vim
+alias ssha="eval $(ssh-agent)"
 # ------------------------- personalised completions -------------------------
 
 owncomp=(
@@ -399,13 +366,6 @@ _source_if "/etc/profile.d/bash_completion.sh"
 
 _have gh && . <(gh completion -s bash)
 _have pandoc && . <(pandoc --bash-completion)
-_have kubectl && . <(kubectl completion bash)
-_have k && complete -o default -F __start_kubectl k
-_have kind && . <(kind completion bash)
-_have yq && . <(yq shell-completion bash)
-_have helm && . <(helm completion bash)
-_have minikube && . <(minikube completion bash)
-_have mk && complete -o default -F __start_minikube mk
 _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
@@ -418,3 +378,15 @@ _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansib
 	-W "$(grep "^Host" ~/.ssh/config | \
 	grep -v "[?*]" | cut -d " " -f2 | \
 	tr ' ' '\n')" scp sftp ssh
+POWERLINE=false
+if $POWERLINE == true; then
+  . /home/tim/.local/bin/powerline/bindings/bash/powerline.sh
+fi
+#Fun note on each open
+echo "=======================" | lolcat
+learn | lolcat
+echo "======================="| lolcat
+complete -C /usr/local/bin/bit bit
+
+eval "$(aactivator init)"
+

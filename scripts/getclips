@@ -1,0 +1,2 @@
+#!/bin/sh
+rofi -modi "clipboard:$HOME/.local/bin/scripts/greenclip print" -show clipboard -run-command '{cmd}'

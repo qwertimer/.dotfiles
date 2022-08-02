@@ -1,0 +1,3 @@
+Update dotfiles build to automate the moving of all dotfiles to their correct location. Destructive.....
+
+Split program list into base, dev, system utils

@@ -1,0 +1,3 @@
+#!/bin/bash
+rofi -modi "clipboard:/home/qwertimer/.local/bin/scripts/greenclip print" -show clipboard -run-command '{cmd}'
+

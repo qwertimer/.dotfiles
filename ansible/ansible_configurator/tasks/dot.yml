@@ -1,0 +1,9 @@
+
+- name: Cloning .dotfiles
+  ansible.builtin.git:
+    repo: 'git@github.com:qwertimer/.dotfiles.git'
+    dest: "{{ REPO_BASE }}/{{ pers }}/.dotfiles"
+    recursive: yes
+    update: yes
+    accept_hostkey: yes
+    version: master

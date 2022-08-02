@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 notification(){
 	
@@ -6,78 +6,66 @@ notification(){
 
 }
 
-menu(){
-	printf "1: Lofi Girl\n"
-	printf "2: Chillhop\n"
-	printf "3: Box Lofi\n"
-	printf "4: The Bootleg Boy\n"
-	printf "5: Radio Spinner\n"
-	printf "6: SmoothChill\n"
-    printf "7: Rob\n"
-	printf "8: Hope 103.2\n"
-	printf "9: Hope Christmas\n"
-	printf "10: Christmas Songs\n"
-	printf "11: Christmas Lofi\n"
+options=("Lofi Girl
+Chillhop
+Box Lofi
+The Bootleg Boy
+Radio Spinner
+SmoothChill
+Rob
+Hope 103.2 
+Hope Christmas
+Christmas Songs
+Christmas Lofi")
 
-}
+choice=$(echo -e "${options[@]}" | rofi -dmenu -p 'Play songs:' )
 
-
-main() {
-	menu_choice=$(menu | rofi -dmenu)
-
-  name="${menu_choice#*:}"
-  notification "$name"
-  
-	choice="${menu_choice%:*}"
-	case $choice in
-		1)
-			mpv "https://play.streamafrica.net/lofiradio"
-			break
+pkill mpv 
+name="${choice}"
+notification "$name"
+echo "$choice"
+case "$choice" in
+	  quit)
+			echo "Terminated" && exit 1
 			;;
-		2)
+		"Lofi Girl")
+			mpd "https://play.streamafrica.net/lofiradio"
+			;;
+		Chillhop)
 			mpv "http://stream.zeno.fm/fyn8eh3h5f8uv"
-			break
 			;;
-		3)
+	  "Box Lofi")
 			mpv "http://stream.zeno.fm/f3wvbbqmdg8uv"
-			break
 			;;
-		4)
+		"The Bootleg Boy")
 			mpv "http://stream.zeno.fm/0r0xa792kwzuv"
-			break
 			;;
-		5)
+		"Radio Spinner")
 			mpv "https://live.radiospinner.com/lofi-hip-hop-64"
-			break
 			;;
-		6)
+		SmoothChill)
 			mpv "https://media-ssl.musicradio.com/SmoothChill"
-			break
 			;;
-		7)
+		Rob)
 		  mpv "https://www.twitch.tv/rwxrob" --no-video
-			break
 			;;
-		8)
-			mpv "https://stream.hopemedia.com.au/hope-mp3"
-			break
+		"Hope 103.2")
+			mpv "https://stream.hopemedia.com.au/hope-mp3" >/dev/null
 			;;
 			
-		9)
+		"Hope Christmas")
 			mpv "https://stream.hopemedia.com.au/christmashope-mp3"
-			break
-		;;
+		  ;;
 			
-		10)
+	"Christmas Songs")
 			mpv "https://www.youtube.com/watch?v=NUtBQiKa-WU" --no-video
-			break
 			;;
 
-		11)
-			mpv "https://www.youtube.com/watch?v=75LR1d9_mtM" --no-video
-			break
+  "Christmas Lofi")
+			mpv "https://www.youtube.com/watch?v=75LR1d9_mtM" --no-video >/dev/null &
 			;;
-	esac
-}
+		*)
+			exit 1
+			;;
+esac
 
-pkill -f http || main

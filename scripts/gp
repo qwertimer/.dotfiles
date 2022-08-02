@@ -1,3 +1,14 @@
-#!/bin/sh
+#!/bin/bash
+eval `ssh-agent`
 
-git pull git@github.com:qwertimer/"$1"
+parent="$(basename $(dirname $(pwd)))"
+
+if [[ parent == 'tim-flux' ]]; then
+  ssh-add ~/.ssh/id_work1
+elif [[ parent == 'qwertimer' ]]; then
+  ssh-add ~/.ssh/id_ed25519
+else
+  echo "Not normal figure it out yourself"
+fi
+
+git pull

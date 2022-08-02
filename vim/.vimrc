@@ -147,7 +147,6 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
 
   Plug 'mbbill/undotree'
 
-  Plug 'morhetz/gruvbox'
   Plug 'joshdick/onedark.vim'
   Plug 'KeitaNakamura/neodark.vim'
   Plug 'romgrk/doom-one.vim'
@@ -158,6 +157,7 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'itchyny/lightline.vim'
 
   Plug 'neoclide/coc.nvim', {'branch': 'release'}
+  Plug 'stephpy/vim-yaml'
   "Deoplete with tabnine
   "if has('nvim')
   "  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
@@ -236,6 +236,10 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
     au FileType go nmap <leader>l :GoMetaLinter!<CR>
   augroup END
 
+" yaml autoindent
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
+
   "Python highlighting
   let g:python_highlight_all = 1
 else
@@ -256,7 +260,7 @@ if $COLORTERM == 'alacritty'
 endif
 
 set background=dark
-colorscheme elflord
+colorscheme onedark
 
 " Set extra options when running in GUI mode
 if has("gui_running")

@@ -1,0 +1,21 @@
+#!/bin/bash
+xhost +"local:docker@"
+	docker run \
+		--rm \
+		--memory 2gb \
+		--network=container:gluetun \
+		--cpuset-cpus 0 \
+		-v /etc/localtime:/etc/localtime:ro \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-v "${HOME}/.firefox/mozilla:/root/.mozilla" \
+		-v "${HOME}/Downloads:/root/Downloads" \
+		-v "${HOME}/Pictures:/root/Pictures" \
+		-e "DISPLAY=unix${DISPLAY}" \
+		-e GDK_SCALE \
+		-e GDK_DPI_SCALE \
+		--device /dev/snd \
+		--device /dev/dri \
+		--name test \
+		ff "$@"
+
+## -v "${HOME}/.firefox/cache:/root/.cache/mozilla" \

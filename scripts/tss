@@ -1,2 +1,4 @@
 #!/bin/sh
-tailscale status
+options=$(tailscale status)
+choice=$(echo "${options}" | rofi -dmenu -p 'tailscale')
+echo $choice | awk '{print $1}' | xclip -selection clipboard

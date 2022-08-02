@@ -1,0 +1,9 @@
+[user]
+email = tim@fluxrobotics.ai
+name = tim-flux
+ 
+[github]
+user = "tim-flux"
+ 
+[core]
+sshCommand = "ssh -i ~/.ssh/work_ed"

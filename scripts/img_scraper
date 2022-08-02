@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import sys
+import os
+import random
+import requests
+from threading import Thread
+
+k = 32
+#https://imgur.com/a/WPWrz
+def scraper(ls):
+    VALID_PATH = "images"
+    if not os.path.exists(VALID_PATH):
+        os.mkdir(VALID_PATH)
+    while True:
+        try:
+            random.shuffle(ls)
+            img = ''.join([random.choice(ls) for x in range(7)])
+            url = 'https://' + 'imgur.com' + '/' + img
+            urrl = 'i.imgur.com' + '/' + img + '.jpeg'
+            response = requests.head(url)
+            response.raise_for_status()
+            print('Valid[+]:'+url)
+            if response.status_code == 200:
+                r = requests.get(urrl, stream=True)  # stream for partial download
+                with open(os.path.join(VALID_PATH, img)+".jpeg", 'bw') as f:
+                    for chunk in r.iter_content(8192):
+                        f.write(chunk)
+            pass
+        except requests.exceptions.HTTPError as err:
+            print('NOT valid[-]:'+url)
+            pass
+str1 = ('abcdefghijklmnopqrstuvwxyz')
+str2 = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+str3 = ('1234567890')
+str4 = str1 + str2 + str3
+ls = list(str4)
+for i in range(k):
+    Thread(target=scraper, args=(ls,)).start()
+ 

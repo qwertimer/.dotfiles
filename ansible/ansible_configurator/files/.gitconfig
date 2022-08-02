@@ -1,0 +1,18 @@
+# ~/.gitconfig
+[core]
+  excludesfile = ~/.gitignore      # valid everywhere
+  pager = less
+  editor = vim
+
+[diff]
+  tool = meld
+  colorMoved =  zebra
+
+[merge]
+  tool = meld
+
+[includeIf "gitdir:~/personal/"]
+path = ~/personal/.gitconfig-pers
+ 
+[includeIf "gitdir:~/flux/"]
+path = ~/flux/.gitconfig-work

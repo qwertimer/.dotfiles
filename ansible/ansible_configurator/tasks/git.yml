@@ -1,0 +1,32 @@
+- include_vars: ./vars/vars.yml
+- name: Create directory for personal repos
+  ansible.builtin.file:
+    path: "{{ REPO_BASE }}/{{ pers }}"
+
+- name: Creating directory for work repos
+  ansible.builtin.file:
+    path: "{{ REPO_BASE }}/{{ work }}"
+
+- name: Copy gitconfig to system
+  ansible.builtin.copy:
+    src: ./files/.gitconfig
+    dest: ~/.gitconfig
+
+- name: Copy gitconfig-pers to system
+  ansible.builtin.copy:
+    src: ./files/.gitconfig-pers
+    dest: "{{ REPO_BASE }}/{{ pers }}.gitconfig"
+
+- name: Copy gitconfig-work to system
+  ansible.builtin.copy:
+    src: ./files/.gitconfig-work
+    dest: "{{ REPO_BASE }}/{{ work }}.gitconfig-work"
+
+- name: Cloning .dotfiles
+  ansible.builtin.git:
+    repo: 'git@github.com:qwertimer/.dotfiles.git'
+    dest: "{{ REPO_BASE }}/{{ pers }}/.dotfiles"
+    recursive: yes
+    update: yes
+    accept_hostkey: yes
+    version: master

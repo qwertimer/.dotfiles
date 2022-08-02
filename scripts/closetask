@@ -1,7 +1,0 @@
-#!/bin/sh
-
-
-#Deprecated
-cd ~/repos/github.com/qwertimer/tasks/
-gh issue close "$*"
-cd -

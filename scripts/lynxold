@@ -1,3 +1,0 @@
-#!/bin/bash
-exec lynx
-#docker run -it --rm lynx "$*"

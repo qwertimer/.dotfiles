@@ -1,0 +1,22 @@
+#!/bin/bash
+if (( $# == 0 )); then
+  Err 'Argument required.'
+  return 1
+elif (( $# > 1 )); then
+  Err 'Only one argument is valid.'
+  return 1
+fi
+
+IFS=':' read -a Paths <<< "$PATH"
+
+while read; do
+  [[ -f $REPLY ]] || continue
+
+  for Path in "${Paths[@]}"; {
+    if [[ ${REPLY%/*} == $Path ]]; then
+      printf '%s\n' "$REPLY"
+      continue 2
+    fi
+  }
+done <<< "$(dpkg -L "$1" 2>&-)"
+
