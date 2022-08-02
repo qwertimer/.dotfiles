@@ -12,20 +12,12 @@ esac
 _have()      { type "$1" &>/dev/null; }
 _source_if() { [[ -r "$1" ]] && source "$1"; }
 
-# --------------------------- Start tmux on startup --------------------------
-
-# if tmux is executable and not inside a tmux session, then try to attach.
-# if attachment fails, start a new session
-#[ -x "$(command -v tmux)" ] \
-#  && [ -z "${TMUX}" ] \
-#  && { tmux attach || tmux; } >/dev/null 2>&1
-
 # --------------------------- environment variables --------------------------
 #                           (also see envx)
 
 
 # Folders
-export USER="qwertimer"
+export USER=$(whoami)
 export GITUSER="qwertimer"
 export DESKTOP="$HOME/Desktop"
 export DOCUMENTS="$HOME/Documents"
@@ -62,7 +54,8 @@ export HELP_BROWSER=lynx
 #export GREP_OPTIONS=' — color=auto'
 
 # ------------------------ programmming env variables ------------------------
-export PYTHONDONTWRITEBYTECODE=1
+
+export PYTHONDONTWRITEBYTECODE=1 # stops auto running .pyc
 
 test -d ~/.vim/spell && export VIMSPELL="~/.vim/spell/*.add"
 
@@ -139,7 +132,7 @@ fi
 
 # --------------------------- smart prompt ---------------------------
 #. ~/.ps1_christmas
-. ~/.bash_prompt
+#. ~/.bash_prompt
 #. ~/.ps1_jfrazelle
 #PROMPT_COMMAND="__ps1"
 # ------------------------- Path add/remove functions ------------------------
@@ -244,10 +237,6 @@ _fzf_comprun() {
     *)            fzf "$@" ;;
   esac
 }
-#if [ -f ~/.bashrc-personal ]; then
-#. ~/.bashrc-personal
-#fi
-#source "$HOME/.cargo/env"
 export PATH="$HOME/gems/bin:$PATH"
 
 
@@ -260,7 +249,6 @@ fi
 
 [ -f ~/.fztricks.bash ] && source ~/.fztricks.bash && alias fz="fz -a"
 
-source ~/.fztricks.bash
 # -------------------------------- completion --------------------------------
 
 # enable programmable completion features (you don't need to enable
@@ -273,6 +261,7 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
 
 
 # --------------------------------- aliases  ---------------------------------
@@ -293,9 +282,6 @@ alias snippets='cd "$SNIPPETS"'
 alias ?='duck'
 alias ??='google'
 alias ???='bing'
-
-#default python
-alias python="/usr/bin/python3.9"
 
 #better pip
 alias pip="python3 -m pip"
@@ -322,7 +308,7 @@ alias ssha="eval $(ssh-agent)"
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
-  venvwrap n dockerfunc
+  venvwrap n .dockerfunc
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
@@ -346,18 +332,10 @@ export FZF_CTRL_R_OPTS='--sort --exact'
 
 # --------------- personal, work and environment configurations --------------
 
-if [ -f ~/.bashrc_envs ]; then
-    . ~/.bashrc_envs
-fi
-
-if [[ -f ~/.bashrc_aliases ]]; then
-    . ~/.bashrc_aliases
-fi
-
-for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
-	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
-done
-unset file
+#for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
+#	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
+#done
+#unset file
 
 
 # ---------------------------- Program completions ---------------------------
@@ -366,6 +344,7 @@ _source_if "/etc/profile.d/bash_completion.sh"
 
 _have gh && . <(gh completion -s bash)
 _have pandoc && . <(pandoc --bash-completion)
+_have yq && . <(yq shell-completion bash)
 _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
@@ -388,5 +367,5 @@ learn | lolcat
 echo "======================="| lolcat
 complete -C /usr/local/bin/bit bit
 
-eval "$(aactivator init)"
+#eval "$(aactivator init)"
 

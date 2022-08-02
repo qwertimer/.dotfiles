@@ -1,0 +1,31 @@
+
+- name: polybar dependencies
+  package:
+    name:
+      - cmake
+      - cmake-data
+      - git
+      - build-essentials
+      - pkg-config
+      - libuv
+      - cairo
+      - libxcb
+      - python3
+      - xcb-proto
+      - xcb-util-image
+      - xcb-util-wm
+      - python-sphinx
+      - python-packaging
+
+- name: Clone polybar
+  ansible.builtin.git:
+    repo: https://github.com/polybar/polybar
+    dest: /tmp/polybar recursive=yes
+
+- name: Build polybar
+  make:
+    chdir: /tmp/polybar
+    target: install
+    become: yes
+
+

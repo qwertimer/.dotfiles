@@ -66,19 +66,6 @@ nginx_config(){
 #
 # Container Aliases
 #
-apt_file(){
-	docker run --rm -it \
-		--name apt-file \
-		jess/apt-file
-}
-alias apt-file="apt_file"
-aws(){
-	docker run -it --rm \
-		-v $HOME/.aws:/root/.aws \
-		--log-driver none \
-		--name aws \
-		jess/awscli "$@"
-}
 bees(){
 	docker run -it --rm \
 		-e NOTARY_TOKEN \
@@ -209,37 +196,10 @@ gcalcli(){
 		--name gcalcli \
 		jess/gcalcli "$@"
 }
-gimp(){
-	del_stopped gimp
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-v $HOME/Pictures:/root/Pictures \
-		-v $HOME/.gtkrc:/root/.gtkrc \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--name gimp \
-		jess/gimp
-}
 hollywood(){
 	docker run --rm -it \
 		--name hollywood \
 		jess/hollywood
-}
-htop(){
-	docker run --rm -it \
-		--pid host \
-		--name htop \
-		jess/htop
-}
-http(){
-	docker run -t --rm \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		--net host \
-		--log-driver none \
-		jess/httpie "$@"
 }
 imagemin(){
 	local image=$1
@@ -279,25 +239,6 @@ john(){
 	docker run --rm -it \
 		-v ${file}:/root/$(basename ${file}) \
 		jess/john $@
-}
-kernel_builder(){
-	docker run --rm -it \
-		-v /usr/src:/usr/src \
-		--name kernel-builder \
-		jess/kernel-builder
-}
-libreoffice(){
-	del_stopped libreoffice
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-v $HOME/slides:/root/slides \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--name libreoffice \
-		jess/libreoffice
 }
 lpass(){
 	docker run --rm -it \
@@ -378,282 +319,6 @@ ncmpc(){
 		--name ncmpc \
 		jess/ncmpc "$@"
 }
-neoman(){
-	del_stopped neoman
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		--device /dev/bus/usb \
-		--device /dev/usb \
-		--name neoman \
-		jess/neoman
-}
-nes(){
-	del_stopped nes
-	local game=$1
-
-	docker run -d \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		--device /dev/dri \
-		--device /dev/snd \
-		--name nes \
-		jess/nes /games/${game}.rom
-}
-nginx(){
-	del_stopped nginx
-
-	docker run -d \
-		--restart always \
-		-v $HOME/.nginx:/etc/nginx \
-		--net host \
-		--name nginx \
-		nginx
-
-	# add domain to hosts & open nginx
-	sudo hostess add jess 127.0.0.1
-}
-nmap(){
-	docker run --rm -it \
-		--net host \
-		jess/nmap "$@"
-}
-notify_osd(){
-	del_stopped notify-osd
-
-	docker run -d \
-		-v /etc/machine-id:/etc/machine-id:ro \
-		-v /var/run/dbus:/var/run/dbus \
-		-v /var/run/user/$(id -u):/var/run/user/$(id -u) \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e XAUTHORITY \
-		-e DBUS_SESSION_BUS_ADDRESS \
-		-v /etc/passwd:/etc/passwd:ro \
-		-v /etc/group:/etc/group:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-u $(whoami) -w "$HOME" \
-		-v $HOME/.Xauthority:$HOME/.Xauthority \
-		-v $HOME/.cache/dconf:$HOME/.cache/dconf \
-		--name notify_osd \
-		jess/notify-osd
-}
-pandoc(){
-	local file=${@: -1}
-	local lfile=$(readlink -m "$(pwd)/${file}")
-	local rfile=$(readlink -m "/$(basename $file)")
-	local args=${@:1:${#@}-1}
-
-	docker run --rm \
-		-v ${lfile}:${rfile} \
-		-v /tmp:/tmp \
-		--name pandoc \
-		jess/pandoc ${args} ${rfile}
-}
-pivman(){
-	del_stopped pivman
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		--device /dev/bus/usb \
-		--device /dev/usb \
-		--name pivman \
-		jess/pivman
-}
-pms(){
-	del_stopped pms
-
-	docker run --rm -it \
-		-v $HOME/.mpd/socket:/var/run/mpd/socket \
-		-e MPD_HOST=/var/run/mpd/socket \
-		--name pms \
-		jess/pms "$@"
-}
-privoxy(){
-	del_stopped privoxy
-	relies_on torproxy
-
-	docker run -d \
-		--restart always \
-		--link torproxy:torproxy \
-		-v /etc/localtime:/etc/localtime:ro \
-		-p 8118:8118 \
-		--name privoxy \
-		jess/privoxy
-
-	sudo hostess add privoxy $(docker inspect --format "{{.NetworkSettings.Networks.bridge.IPAddress}}" privoxy)
-}
-pulseaudio(){
-	del_stopped pulseaudio
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		--device /dev/snd \
-		-p 4713:4713 \
-		--restart always \
-		--name pulseaudio \
-		jess/pulseaudio
-}
-rainbowstream(){
-	docker run -it --rm \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v $HOME/.rainbow_oauth:/root/.rainbow_oauth \
-		-v $HOME/.rainbow_config.json:/root/.rainbow_config.json \
-		--name rainbowstream \
-		jess/rainbowstream
-}
-registrator(){
-	del_stopped registrator
-
-	docker run -d --restart always \
-		-v /var/run/docker.sock:/tmp/docker.sock \
-		--net host \
-		--name registrator \
-		gliderlabs/registrator consul:
-}
-remmina(){
-	del_stopped remmina
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-v $HOME/.remmina:/root/.remmina \
-		--name remmina \
-		jess/remmina
-}
-ricochet(){
-	del_stopped ricochet
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--device /dev/dri \
-		--name ricochet \
-		jess/ricochet
-}
-rstudio(){
-	del_stopped rstudio
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-v $HOME/fastly-logs:/root/fastly-logs \
-		-v /dev/shm:/dev/shm \
-		-e DISPLAY=unix$DISPLAY \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--device /dev/dri \
-		--name rstudio \
-		jess/rstudio
-}
-s3cmdocker(){
-	del_stopped s3cmd
-
-	docker run --rm -it \
-		-e AWS_ACCESS_KEY="${DOCKER_AWS_ACCESS_KEY}" \
-		-e AWS_SECRET_KEY="${DOCKER_AWS_ACCESS_SECRET}" \
-		-v $(pwd):/root/s3cmd-workspace \
-		--name s3cmd \
-		jess/s3cmd "$@"
-}
-scudcloud(){
-	del_stopped scudcloud
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-v /etc/machine-id:/etc/machine-id:ro \
-		-v /var/run/dbus:/var/run/dbus \
-		-v /var/run/user/$(id -u):/var/run/user/$(id -u) \
-		-e TERM \
-		-e XAUTHORITY \
-		-e DBUS_SESSION_BUS_ADDRESS \
-		-e HOME \
-		-e QT_DEVICE_PIXEL_RATIO \
-		-v /etc/passwd:/etc/passwd:ro \
-		-v /etc/group:/etc/group:ro \
-		-u $(whoami) -w "$HOME" \
-		-v $HOME/.Xauthority:$HOME/.Xauthority \
-		-v /etc/machine-id:/etc/machine-id:ro \
-		-v $HOME/.scudcloud:/home/jessie/.config/scudcloud \
-		--device /dev/snd \
-		--name scudcloud \
-		jess/scudcloud
-
-	# exit current shell
-	exit 0
-}
-shorewall(){
-	del_stopped shorewall
-
-	docker run --rm -it \
-		--net host \
-		--cap-add NET_ADMIN \
-		--privileged \
-		--name shorewall \
-		jess/shorewall "$@"
-}
-skype(){
-	del_stopped skype
-	relies_on pulseaudio
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		--link pulseaudio:pulseaudio \
-		-e PULSE_SERVER=pulseaudio \
-		--device /dev/video0 \
-		--name skype \
-		jess/skype
-}
-slack(){
-	del_stopped slack
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		--device /dev/snd \
-		--device /dev/dri \
-		--group-add audio \
-		-v /home/jessie/.slack:/root/.config/Slack \
-		--name slack \
-		jess/slack
-
-	exit
-}
-spotify(){
-	del_stopped spotify
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--device /dev/snd \
-		--name spotify \
-		jess/spotify
-}
-ssh2john(){
-	local file=$(realpath $1)
-
-	docker run --rm -it \
-		-v ${file}:/root/$(basename ${file}) \
-		--entrypoint ssh2john \
-		jess/john $@
-}
 steam(){
 	del_stopped steam
 	relies_on pulseaudio
@@ -676,20 +341,6 @@ t(){
 		-v $HOME/.trc:/root/.trc \
 		--log-driver none \
 		jess/tcli "$@"
-}
-telnet(){
-	docker run -it --rm \
-		--log-driver none \
-		jess/telnet "$@"
-}
-termboy(){
-	del_stopped termboy
-	local game=$1
-
-	docker run --rm -it \
-		--device /dev/snd \
-		--name termboy \
-		jess/nes /games/${game}.rom
 }
 tor(){
 	del_stopped tor
@@ -754,44 +405,6 @@ traceroute(){
 		--net host \
 		jess/traceroute "$@"
 }
-transmission(){
-	del_stopped transmission
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v $HOME/Torrents:/transmission/download \
-		-v $HOME/.transmission:/transmission/config \
-		-p 9091:9091 \
-		-p 51413:51413 \
-		-p 51413:51413/udp \
-		--name transmission \
-		jess/transmission
-
-
-	sudo hostess add transmission $(docker inspect --format "{{.NetworkSettings.Networks.bridge.IPAddress}}" transmission)
-	browser-exec "http://transmission:9091"
-}
-vagrant(){
-	del_stopped vagrant
-
-	# modprobe the module
-	sudo modprobe vboxdrv
-
-	docker run -it \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix  \
-		-e DISPLAY=unix$DISPLAY \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--name vagrant \
-		--net host \
-		-v "$HOME/.vbox/vms:/root/VirtualBox VMs" \
-		-v $HOME/.vbox/config:/root/.config/VirtualBox \
-		-v $HOME/oscon:/root/oscon \
-		--privileged \
-		--entrypoint bash \
-		jess/vagrant
-}
 virtualbox(){
 	del_stopped virtualbox
 
@@ -814,25 +427,6 @@ virtualbox(){
 		jess/virtualbox
 }
 
-vlc(){
-	del_stopped vlc
-	relies_on pulseaudio
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-e DISPLAY=unix$DISPLAY \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--link pulseaudio:pulseaudio \
-		-e PULSE_SERVER=pulseaudio \
-		-v $HOME/Torrents:/home/vlc/Torrents \
-		--device /dev/dri \
-		--name vlc \
-		jess/vlc
-}
-
 vscode() {
 	del_stopped vscode
 
@@ -843,15 +437,6 @@ vscode() {
 		--device /dev/dri \
 		--name vscode \
 		matthewlshields/vscode "$@"
-}
-watchman(){
-	del_stopped watchman
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v $HOME/Downloads:/root/Downloads \
-		--name watchman \
-		jess/watchman --foreground
 }
 wireshark(){
 	del_stopped wireshark
@@ -919,4 +504,38 @@ command_not_found_handle () {
 		-v /tmp/.X11-unix:/tmp/.X11-unix \
 		"jess/$@"
 }
+
+# ------------------------------ bash completion -----------------------------
+
+##Must be placed below the functions
+
+IFS=$'\n'
+functions=()
+for f in $(declare -F); do
+  functions+=( $f )
+done
+func_pre=_
+
+declare -a COMMANDS="${functions[@]//declare -f $func_pre}"
+if [[ -n $COMP_LINE ]]; then
+
+    for c in "${COMMANDS[@]}"; do
+        [[ ${c:0:${#2}} == "${2,,}" ]] && echo "$c"
+    done
+fi
+
+
+### Robs Mods to my code
+#while read -r line; do
+#  [[ $line =~ ^declare\ -f\ _ ]] || contine
+#  COMMANDS+=( ${line##declare -f _} )
+#done < <(declare -F)
+#
+#
+#if [[ -n $COMP_LINE ]]; then
+#
+#    for c in "${COMMANDS[@]}"; do
+#        [[ ${c:0:${#2}} == "${2,,}" ]] && echo "$c"
+#    done
+#fi
 
