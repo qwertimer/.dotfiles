@@ -53,9 +53,8 @@ x_symlinks() {
 
   # Create symlinks.
   echo "Creating Symlinks"
-  echo $DOT
 # ----------------------------------- bash -----------------------------------
-  ln -sf "$DOT/bash/" "$HOME/"
+  ln -sf "$DOT/bash/.bashrc" "$HOME"
 # --------------------------------- dircolors --------------------------------
   ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
 # ----------------------------------- tmux -----------------------------------
@@ -66,8 +65,8 @@ x_symlinks() {
 # ---------------------------------- lsxhkd ----------------------------------
   ln -sf "$DOT/.config/sxhkd/" "$HOME/.config/"
 
-  x_wm_syms
-  x_comp_syms
+  #x_wm_syms
+  #x_comp_syms
 }
 
 
@@ -115,20 +114,15 @@ x_usage() {
   printf "usage: %s (%s)\n" "${0##*/}" "${cmds// /|}"
 }
 
-
-
 x_gitconfig() {
   #info "Configuring Git"
 
   # The .gitconfig will be overwritten; reconfigure it.
   echo "Configuring global .gitignore"
   git config --global core.excludesfile ~/.gitignore_global
-
   git config --global user.name "qwertimer"
   git config --global user.email delltim@gmail.com
-
   git config --global core.editor vim
-  #git config --global user.signingkey
   git config --global merge.tool meld
   git config --global diff.external meld
 
@@ -140,21 +134,13 @@ x_gitconfigw() {
   echo "Configuring global .gitignore"
   git config --global core.excludesfile ~/.gitignore_global
 
-  git config --global user.name "tim-flux"
-  git config --global user.email tim@fluxrobotics.ai
-
+  git config --global user.name "tim-polydatum"
+  git config --global user.email tim@polydatum.com
   git config --global core.editor vim
-  #git config --global user.signingkey
   git config --global merge.tool meld
   git config --global diff.external meld
 
 }
-
-
-
-
-
-
 
 
 

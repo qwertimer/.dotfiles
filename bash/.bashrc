@@ -297,6 +297,7 @@ alias view="vi -R"
 alias sshh='sshpass -f $HOME/.sshpass ssh '
 alias temp='cd $(mktemp -d)'
 
+alias poly="cd ~/repos/github.com/polydatum"
 
 alias bat=batcat
 #source bash
@@ -341,7 +342,6 @@ export FZF_CTRL_R_OPTS='--sort --exact'
 # ---------------------------- Program completions ---------------------------
 
 _source_if "/etc/profile.d/bash_completion.sh"
-
 _have gh && . <(gh completion -s bash)
 _have pandoc && . <(pandoc --bash-completion)
 _have yq && . <(yq shell-completion bash)
@@ -349,7 +349,7 @@ _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
 
-
+source /home/tim/.bash_completions/pls.sh
 # Add tab completion for SSH hostnames based on ~/.ssh/config
 # ignoring wildcards
 [[ -e "$HOME/.ssh/config" ]] && complete -o "default" \
@@ -362,10 +362,8 @@ if $POWERLINE == true; then
   . /home/tim/.local/bin/powerline/bindings/bash/powerline.sh
 fi
 #Fun note on each open
-echo "=======================" | lolcat
-learn | lolcat
-echo "======================="| lolcat
 complete -C /usr/local/bin/bit bit
 
 #eval "$(aactivator init)"
+pls
 

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+scan(){
+  str_in=${1:-'eth0\|enp\|wlan0\|wl'}
+  echo $str_in
+  ipaddr=$(ip a | grep $str_in | grep inet | awk '{ print $2 }' |  sed 's/\/24//')
+  echo $ipaddr
+  read -r -d '' py_script <<"EOF"
+  import sys; ip = f"{sys.argv[1]}"; ip_out = f"{'.'.join(ip.split('.')[:-1])}.1-255"; print(ip_out);
+EOF
+  res=$(python3 -c "$py_script" "$ipaddr")
+  sudo nmap $res -sL
+}
+
+scan "$1" 

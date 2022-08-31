@@ -21,7 +21,7 @@ if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
     fi
     tmux new-window -t $session:9
 
-    tmux send -t $session:9 "exec lynx \
+    tmux send -t $session:9 "exec w3m \
         'https://google.com/search?q=$*'" Enter
     tmux select-window -t $session:9
 
@@ -30,5 +30,5 @@ if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
         tmux send-keys -t $session:$val "C-m"
     fi
 else
-    exec lynx "https://google.com/search?q=$*"
+    exec w3m "https://google.com/search?q=$*"
 fi

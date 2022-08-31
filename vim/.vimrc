@@ -141,51 +141,17 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
 
   Plug 'tpope/vim-fugitive'
-  "Plug 'frazrepo/vim-rainbow'
-
   Plug 'mhinz/vim-startify'
-
   Plug 'mbbill/undotree'
-
   Plug 'joshdick/onedark.vim'
   Plug 'KeitaNakamura/neodark.vim'
   Plug 'romgrk/doom-one.vim'
-
   Plug 'mileszs/ack.vim'
   Plug 'dense-analysis/ale'
-
   Plug 'itchyny/lightline.vim'
-
-  Plug 'neoclide/coc.nvim', {'branch': 'release'}
   Plug 'stephpy/vim-yaml'
-  "Deoplete with tabnine
-  "if has('nvim')
-  "  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-  "else
-  "  Plug 'Shougo/deoplete.nvim'
-  "  Plug 'roxma/nvim-yarp'
-  "  Plug 'roxma/vim-hug-neovim-rpc'
-  "  Plug 'tbodt/deoplete-tabnine', { 'do': './install.sh' }
-  "endif
-  "let g:deoplete#enable_at_startup = 1
 
   call plug#end()
-
-  """"""""""""""""""""""""""""""""""""""
-  "" Configure coc
-  """"""""""""""""""""""""""""""""""""""
-  inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-  inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
-  " use <tab> for trigger completion and navigate to the next complete item
-  function! s:check_back_space() abort
-    let col = col('.') - 1
-    return !col || getline('.')[col - 1]  =~ '\s'
-  endfunction
-
-  inoremap <silent><expr> <Tab>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<Tab>" :
-      \ coc#refresh()
 
   """""""""""""""""""""""""""""""""""""
   "lightline
@@ -238,10 +204,8 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
 
 " yaml autoindent
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
-
-
   "Python highlighting
-  let g:python_highlight_all = 1
+let g:python_highlight_all = 1
 else
   autocmd vimleavepre *.go !gofmt -w % " backup if fatih fails
 endif
