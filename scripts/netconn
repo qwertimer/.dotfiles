@@ -1,0 +1,4 @@
+#!/bin/sh
+options=$(nmcli con show)
+choice=$(echo "${options}" | rofi -dmenu -p 'wifi')
+echo $choice | awk '{print $1}' | xargs nmcli dev wifi c 

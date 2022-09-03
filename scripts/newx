@@ -12,6 +12,13 @@ if [ -e "${path}" ]; then
   exit 0
 fi
 
-printf "#!/bin/sh\n\n" > "${path}"
+cat > "${path}" << EOF
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "$(date)"
+# Project:
+EOF
 chmod +x "${path}" 
 exec vim +2 "${path}"
