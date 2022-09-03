@@ -239,8 +239,8 @@ super + a; super + t
 	~/.scripts/xclip/torrent
 
 # download youtube
-super + a; super + v
-	~/.scripts/xclip/youtube
+#super + a; super + v
+#	~/.scripts/xclip/youtube
 
 # generate password
 super + a; super + p

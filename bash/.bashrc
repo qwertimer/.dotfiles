@@ -300,6 +300,8 @@ alias temp='cd $(mktemp -d)'
 alias poly="cd ~/repos/github.com/polydatum"
 
 alias bat=batcat
+export FZF_DEFAULT_COMMAND="find ."
+alias p='vim `fzf --preview="bat --color always {}"`'
 #source bash
 alias sb=". ~/.bashrc"
 alias v=vim
