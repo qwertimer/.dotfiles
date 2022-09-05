@@ -25,7 +25,8 @@ export DOWNLOADS="$HOME/Downloads"
 export PICTURES="$HOME/Pictures"
 export MUSIC="$HOME/Music"
 export VIDEOS="$HOME/Videos"
-export GHREPOS="$HOME/repos/github.com/$GITUSER"
+export REPOS="$HOME/repos"
+export GHREPOS="$REPOS/github.com/$GITUSER"
 export DOTFILES="$GHREPOS/.dotfiles"
 export ZETDIR="$GHREPOS/zet"
 export SNIPPETS="$DOTFILES/snippets"
@@ -365,6 +366,30 @@ if $POWERLINE == true; then
 fi
 #Fun note on each open
 complete -C /usr/local/bin/bit bit
+
+clone() {
+  local repo="$1" user
+  local repo="${repo#https://github.com/}"
+  local repo="${repo#git@github.com:}"
+  if [[ $repo =~ / ]]; then
+    user="${repo%%/*}"
+  else
+    user="$GITUSER"
+    [[ -z "$user" ]] && user="$USER"
+  fi
+  local name="${repo##*/}"
+  local userd="$REPOS/github.com/$user"
+  local path="$userd/$name"
+  [[ -d "$path" ]] && cd "$path" && return
+  mkdir -p "$userd"
+  cd "$userd"
+  echo gh repo clone "$user/$name" -- --recurse-submodule
+  gh repo clone "$user/$name" -- --recurse-submodule
+  cd "$name"
+} && export -f clone
+
+export PATH=$PATH:/usr/local/go/bin
+
 
 #eval "$(aactivator init)"
 pls

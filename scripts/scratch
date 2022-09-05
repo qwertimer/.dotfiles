@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Sun 04 Sep 2022 08:37:44 ACST"
+# Project: Scratchpad -- Simple bspwm scratchpad terminal ( From
+# Jake@Linux )
+
+winclass="$(xdotool search --name scratch)";
+if [ -z "$winclass" ]; then
+  alacritty --title scratch
+else
+  if [ ! -f /tmp/scpad ]; then
+    touch /tmp/scpad && xdo hide "$winclass"
+  elif [ -f /tmp/scpad ]; then
+    rm /tmp/scpad && xdo show "$winclass"
+  fi
+fi

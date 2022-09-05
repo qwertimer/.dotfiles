@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Mon 05 Sep 2022 22:43:18 ACST"
+# Project: pyrun -- simple runner for python using entr
+
+
+entr bash -c "clear; python3 $1" <<< "$1"
+
+

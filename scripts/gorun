@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Mon 05 Sep 2022 21:54:46 ACST"
+# Project: Basic runner for go programs
+
+entr bash -c "clear; go run $1.go" <<< "$1".go
+
+

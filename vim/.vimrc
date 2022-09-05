@@ -109,7 +109,7 @@ endif
 filetype plugin on
 
 let mapleader=' '
-
+map <leader>w :w <CR>
 
 " Edit/Reload vimr configuration file
 nnoremap confe :e $HOME/.vimrc<CR>
@@ -139,7 +139,6 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'vim-pandoc/vim-pandoc'
   Plug 'rwxrob/vim-pandoc-syntax-simple'
   Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-
   Plug 'tpope/vim-fugitive'
   Plug 'mhinz/vim-startify'
   Plug 'mbbill/undotree'
