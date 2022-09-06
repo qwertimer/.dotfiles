@@ -17,3 +17,16 @@ have programs that are useable in scripts without the bashrc file.
 Soon i will have a searchable system outlining all of my scripts. This
 program will list all commands and the default description of what they
 do.
+
+## Install
+
+I have begun wrapping all of my most used programs in a simple
+installation script. I have added some cool trickery that allows tab
+completion to work on the installation file. To do this simply source
+the script before running the commands and you will have tab completion
+for the remainder of your time in the shell. 
+
+## build
+
+Build provides functionality to symlink common dotfiles and utilities to
+their respective locations

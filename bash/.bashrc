@@ -197,6 +197,7 @@ pathappend \
 export CDPATH=.:\
 ~/repos/github.com:\
 ~/repos/github.com/$GITUSER:\
+~/repos/github.com/polydatum:\
 /media/$USER:\
 ~/.local/bin:\
 ~

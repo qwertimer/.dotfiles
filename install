@@ -1,5 +1,15 @@
 #!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "$(date)"
+# Project: New System Install 
+
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo "script ${BASH_SOURCE[0]} is being sourced ..." \
+  && owncomp=(./install) \
+  && for i in ${owncomp[@]}; do complete -C $i $i; done
+
 x.gh() {
+  _have gh && echo "gh is already installed" && exit
   _is_deb && x._gh_deb
   _is_arch && x._gh_arch
 }
@@ -13,6 +23,7 @@ x._gh_deb() {
   && sudo apt install gh -y
  }
 x._gh_arch() {
+
   sudo pacman -S github-cli
 }
 
@@ -38,13 +49,14 @@ x.docker() {
   _have docker && echo "docker is already on the system " || curl -fsSL get.docker.com | bash
 }
 x.lazy_docker() {
+  _have lazydocker && echo "lazydocker is already installed" || \
   curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
 }
 
 x.lazy_git() {
+  _have lazygit && echo "lazygit is already installed" || \
   clone jesseduffield/lazygit
-  _have /usr/bin/go && go install 
- # || $(get_go && go_install)
+  _have go && go install || get_go && go install
 }
 
 x.ts() {
@@ -52,7 +64,8 @@ x.ts() {
 }
 
 x.tailscale() {
-  echo "Installing Tailscale"
+
+  _have tailscale && echo "tailscale is already installed" && exit 
   _is_deb && curl -fsSL https://tailscale.com/install.sh | sh
   _is_arch && sudo pacman -S tailscale  \
    && sudo systemctl enable --now tailscaled && sudo tailscale up
@@ -64,10 +77,16 @@ x.siab() {
 }
 
 x.shell_in_a_box() {
-  echo hello
-  _is_deb && sudo apt-get install shellinabox
-  _is_arch && echo "shell_in_a_box doesn't exist on arch"
+  _have shellinabox && echo "shellinabox is already installed" && exit
+  _is_deb && sudo apt-get install shellinabox 
+  _is_arch && echo "shell_in_a_box doesn't exist on arch" && x.docker_siab
+
   }
+
+  x.docker_siab() {
+  :
+}
+
 
 x.all() {
   x.sys_basics
@@ -156,4 +175,3 @@ fi
 #  _alternatives "$@" 
 #  exit $?
 #fi
-

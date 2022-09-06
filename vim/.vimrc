@@ -346,6 +346,7 @@ set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ 
 
 " functions keys
 map <F1> :set number!<CR> :set relativenumber!<CR>
+map <F8> :set nonumber!<CR> 
 nmap <F2> :call <SID>SynStack()<CR>
 set pastetoggle=<F3>
 map <F4> :set list!<CR>

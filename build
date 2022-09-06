@@ -18,7 +18,7 @@ x__pathappend() {
   done
 }
 
-x_scriptslink() {
+x_scripts() {
     
     echo "Setting Scripts variable and adding scripts to path"
 	  export SCRIPTS=~/.local/bin/scripts
@@ -28,7 +28,6 @@ x_scriptslink() {
 
     echo "adding scripts to path"
     if test -e ~/.bashrc-personal; then
-        echo "bashrc found"
         x__pathappend \
             "$SCRIPTS/"
     fi
@@ -49,7 +48,7 @@ x_addDirs() {
 
 }
 
-x_symlinks() {
+x_syms() {
 
   # Create symlinks.
   echo "Creating Symlinks"
@@ -62,8 +61,6 @@ x_symlinks() {
 # ------------------------------------ vim -----------------------------------
   ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
   ln -sf "$DOT/vim/.vimrc" "$HOME/.sshrc.d"
-# ---------------------------------- lsxhkd ----------------------------------
-  ln -sf "$DOT/.config/sxhkd/" "$HOME/.config/"
 
   #x_wm_syms
   #x_comp_syms
@@ -71,19 +68,22 @@ x_symlinks() {
 
 
 # ---------------------------- Additional symlinks ---------------------------
-x_xsysutils_syms() {
+x_sysutils() {
 
   ln -sf "$DOT/x/.xinitrc" "$HOME/.xinitrc"
   ln -sf "$DOT/x/.Xresources" "$HOME/.Xresources"
 }
 
+# ---------------------------------- sxhkd ----------------------------------
+x_sxhkd() {
+  _have sxhkd && ln -sf "$DOT/.config/sxhkd/" "$HOME/.config/"
+}
+
 x_wm_syms() {
   #bspwm
-
-  ln -sf "$DOT/.config/bspwm" "$HOME/.config"
-
-  #ln -sf "$DOT/.config/sxhkd" "$HOME/.config"
-  ln -sf "$DOT/.config/polybar" "$HOME/.config"
+  _have bspwm   && ln -sf "$DOT/.config/bspwm" "$HOME/.config"
+  _have polybar && ln -sf "$DOT/.config/polybar" "$HOME/.config"
+  x_sxhkd
   #xmonad
 
 }
@@ -103,10 +103,6 @@ x_comp_syms() {
   ln -sf "$DOT/completions/z.sh" "$HOME/.bash_completion.d/z.sh"
   ln -sf "$DOT/completions/fz.sh" "$HOME/.bash_completion.d/fz.sh"
   ln -sf "$DOT/completions/gh/.gh_comp" "$HOME/"
-}
-
-x_install() {
-  :
 }
 
 x_usage() {
@@ -143,9 +139,13 @@ x_gitconfigw() {
 }
 
 
+# --------------------------------- Utilities --------------------------------
 
+_have()      { type "$1" &>/dev/null; }
 
 # --------------------- completion and delegation --------------------
+
+
 while IFS= read -r line; do
     [[ $line =~ ^declare\ -f\ x_ ]] || continue
     COMMANDS+=( "${line##declare -f x_}" )
