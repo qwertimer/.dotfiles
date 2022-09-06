@@ -1,7 +1,21 @@
 #!/bin/bash
 x.gh() {
-  :
+  _is_deb && x._gh_deb
+  _is_arch && x._gh_arch
 }
+
+x._gh_deb() {
+
+  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  && sudo apt update \
+  && sudo apt install gh -y
+ }
+x._gh_arch() {
+  sudo pacman -S github-cli
+}
+
 
 x.sys_basics() {
   _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3
@@ -12,6 +26,11 @@ x.dev_utils() {
  :
  }
 
+x.fzf() { 
+  _is_deb && sudo apt install fd-find
+  _is_arch && sudo pacman -S fd
+  git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
+}
 x.pip() {
   curl https://bootstrap.pypa.io/get-pip.py | python
 }
@@ -28,7 +47,12 @@ x.lazy_git() {
  # || $(get_go && go_install)
 }
 
+x.ts() {
+  x.tailscale
+}
+
 x.tailscale() {
+  echo "Installing Tailscale"
   _is_deb && curl -fsSL https://tailscale.com/install.sh | sh
   _is_arch && sudo pacman -S tailscale  \
    && sudo systemctl enable --now tailscaled && sudo tailscale up
@@ -46,7 +70,13 @@ x.shell_in_a_box() {
   }
 
 x.all() {
-  :
+  x.sys_basics
+  x.pip
+  x.fzf
+  x.siab
+  x.ts
+  x.lazy_git
+  x.lazy_docker
   }
 
 # --------------------------------- Utilities --------------------------------
