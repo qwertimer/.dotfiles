@@ -1,0 +1,129 @@
+#!/bin/bash
+x.gh() {
+  :
+}
+
+x.sys_basics() {
+  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3
+  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3
+}
+
+x.dev_utils() {
+ :
+ }
+
+x.pip() {
+  curl https://bootstrap.pypa.io/get-pip.py | python
+}
+x.docker() {
+  _have docker && echo "docker is already on the system " || curl -fsSL get.docker.com | bash
+}
+x.lazy_docker() {
+  curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+}
+
+x.lazy_git() {
+  clone jesseduffield/lazygit
+  _have /usr/bin/go && go install 
+ # || $(get_go && go_install)
+}
+
+x.tailscale() {
+  _is_deb && curl -fsSL https://tailscale.com/install.sh | sh
+  _is_arch && sudo pacman -S tailscale  \
+   && sudo systemctl enable --now tailscaled && sudo tailscale up
+
+  }
+
+x.siab() {
+  x.shell_in_a_box
+}
+
+x.shell_in_a_box() {
+  echo hello
+  _is_deb && sudo apt-get install shellinabox
+  _is_arch && echo "shell_in_a_box doesn't exist on arch"
+  }
+
+x.all() {
+  :
+  }
+
+# --------------------------------- Utilities --------------------------------
+
+_is_arch() { cat /etc/os-release | grep "ID_LIKE" | grep "arch" &>/dev/null; }
+_is_deb() { cat /etc/os-release | grep "ID_LIKE" | grep "debian" &>/dev/null; }
+
+get_go() {
+
+  rm -rf /usr/local/go && tar -C /usr/local -xzf go1.19.linux-amd64.tar.gz
+  grep -qxF 'export PATH=$PATH:/usr/local/go/bin' ~/.bashrc || echo 'export PATH=$PATH:/usr/local/go/bin' && source ~/.bashrc
+
+}
+
+clone() {
+  local repo="$1" user
+  local repo="${repo#https://github.com/}"
+  local repo="${repo#git@github.com:}"
+  if [[ $repo =~ / ]]; then
+    user="${repo%%/*}"
+  else
+    user="$GITUSER"
+    [[ -z "$user" ]] && user="$USER"
+  fi
+  local name="${repo##*/}"
+  local userd="$REPOS/github.com/$user"
+  local path="$userd/$name"
+  [[ -d "$path" ]] && cd "$path" && return
+  mkdir -p "$userd"
+  cd "$userd"
+  echo gh repo clone "$user/$name" -- --recurse-submodule
+  gh repo clone "$user/$name" -- --recurse-submodule
+  cd "$name"
+} && export -f clone
+
+_have() { type "$1" &>/dev/null; }
+
+# --------------------- completion and delegation --------------------
+#      `complete -C foo foo` > `source <(foo bloated_completion)`
+
+while IFS= read -r line; do
+  [[ $line =~ ^declare\ -f\ x\. ]] || continue
+  COMMANDS+=( "${line##declare -f x.}" )
+done < <(declare -F)
+mapfile -t COMMANDS < \
+  <(LC_COLLATE=C sort < <(printf "%s\n" "${COMMANDS[@]}"))
+
+if [[ -n $COMP_LINE ]]; then
+  line=${COMP_LINE#* }
+  for c in "${COMMANDS[@]}"; do
+    [[ ${c:0:${#line}} == "${line,,}" ]] && echo "$c"
+  done
+  exit
+fi
+
+#_config_read
+#_have _initialize && _initialize "$@"
+
+for c in "${COMMANDS[@]}"; do
+  if [[ $c == "$EXE" ]]; then
+    "x.$EXE" "$@"
+    exit $?
+  fi
+done
+
+if [[ -n "$1" ]]; then
+  declare CMD="$1"; shift
+  for c in "${COMMANDS[@]}"; do
+    if [[ $c == "$CMD" ]]; then
+      "x.$CMD" "$@"
+      exit $?
+    fi
+  done
+fi
+
+#if _have _alternatives; then
+#  _alternatives "$@" 
+#  exit $?
+#fi
+
