@@ -7,6 +7,7 @@
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo "script ${BASH_SOURCE[0]} is being sourced ..." \
   && owncomp=(./install) \
   && for i in ${owncomp[@]}; do complete -C $i $i; done
+  
 
 x.gh() {
   _have gh && echo "gh is already installed" && exit
@@ -28,13 +29,13 @@ x._gh_arch() {
 }
 
 
-x.sys_basics() {
+x.base() {
   _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3
   _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3
 }
 
 x.dev_utils() {
- :
+ : 
  }
 
 x.fzf() { 

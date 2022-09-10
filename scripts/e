@@ -30,6 +30,9 @@ check() {
     p | poly*)
       file="$HOME/.config/polybar/config"
       ;;
+    t | tmux)
+      file="$HOME/.tmux.conf"
+      ;;
   esac
   _is_file "$file" && edit "$file" || exit
 }
