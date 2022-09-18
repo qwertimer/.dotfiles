@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Tue 13 Sep 2022 10:23:22 ACST"
+# Project:
+
+entr bash -c "clear; echo '-----------testing------------'; go test" < <(find . )

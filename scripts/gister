@@ -3,7 +3,10 @@
 # Created By: Qwertimer
 # Created On: "Sat 10 Sep 2022 15:45:28 ACST"
 # Project: Create a gist and upload
-: "${GITUSER:="qwertimer"}"
+config_info=$(git config -l | grep user.name)
+GITUSER="${config_info##*=}"
+
+#: "${GITUSER:="qwertimer"}"
 : "${GITBRANCH:=main}"
 : "${GHREPOS:="$HOME/repos/github.com/$GITUSER"}"
 : "${GIST_DIR:=$GHREPOS/gists}"
@@ -14,7 +17,94 @@
 
 declare -A HELP
 
-gist_folder() {
+HELP[create]='Creates a new gist, the function allows the user 
+to choose from python, go and bash scripts and will autogenerate 
+the she bang and an author/project note at the top of the program.'
+
+x.create() {
+  PS3="Enter gist language: "
+
+  select ITEM in python go bash; do
+    case $ITEM in
+      python)
+        _check_dir "python"
+        _new_gist "$1" "#!/usr/bin/env python3"
+        ;;
+      go)
+        _check_dir "go" 
+        _new_gist "$1" "//$GOROOT/bin/go run $0 $@ ; exit"
+        ;;
+      bash)
+        _check_dir 'bash'
+        _new_gist "$1" "#!/usr/bin/env bash"
+        ;;
+    esac
+
+  done
+}
+
+HELP[push]='Creates a gist on github.
+  push a gist repo to a public github gist repo
+  '
+x.push() {
+  cd $GIST_DIR
+  _have fzf && file=$(find * -type f | fzf) || echo "fzf not installed"
+  filename="${file##*/}"
+  f="${filename%.*}"
+  gh gist create --public -d $f -f $GIST_DIR/$file $GIST_DIR/$file
+}
+
+HELP[private_push]='Creates a private gist on github.
+  push a gist repo to a private github gist repo
+  '
+x.private_push() {
+  cd $GIST_DIR
+  _have fzf && file=$(find * -type f | fzf) || echo "fzf not installed"
+  filename="${file##*/}"
+  f="${filename%.*}"
+  gh gist create -d $f -f $GIST_DIR/$file $GIST_DIR/$file
+  
+}
+
+
+HELP[list_local]='Lists the local gists stored on the system. 
+Optionally allows the user to open the gist in vim and edit the file.
+Once Edited the user is given the option to push to a public or 
+private gist if they wish.'
+x.list_local() {
+  cd $GIST_DIR
+  file=$(find . -type f  | fzf --preview 'bat --style=numbers --color=always --line-range :500 {}' )
+
+  read -p "Would you like to open? " yes
+  case "${yes}" in
+    y|yes|yep|yeah|ok|okay) 
+      _opener "$GIST_DIR/$file"
+      ;;
+    no|n)
+      cat "$GIST_DIR/$file"
+      exit
+      ;;
+  esac
+}
+
+
+HELP[list_public]="Lists publicly available gists on $GITUSER's account"
+x.list_public() {
+  gh gist list --public
+}
+
+HELP[list_private]="Lists privately available gists on $GITUSER's account"
+x.list_private() {
+  gh gist list --secret
+}
+
+HELP[view_gists]="view a gist from gh"
+x.view_gists() {
+  clear; gh gist view --web
+}
+
+# ---------------------------------- helpers ---------------------------------
+_gist_folder() {
   echo "MAKING DIR"
   mkdir -p "$GIST_DIR"/"$1" 
 }
@@ -28,13 +118,13 @@ _alternatives() {
   fi
 }
 
-check_dir() {
+_check_dir() {
   if [ ! -d "$GIST_DIR/$1" ]; then
     read -p "Would you like me to create a gist directory\n \
 at $GIST_DIR/$1 [Y/n]" yes
     case "${yes}" in
       y|yes|yep|yeppers|yeah|ok|okay)
-        gist_folder $1
+        _gist_folder "$1"
         ;;
       no|n)
         exit
@@ -44,31 +134,8 @@ at $GIST_DIR/$1 [Y/n]" yes
   GIST_FOLDER="$GIST_DIR/$1"
 }
 
-HELP[create]='Creates a new gist, the function allows the user to choose from python, go and bash scripts and will autogenerate the she bang and an author/project note at the top of the program.'
-
-x.create() {
-  PS3="Enter gist language: "
-
-  select ITEM in python go bash; do
-    case $ITEM in
-      python)
-        check_dir "python"
-        new_gist $1 "#!/usr/bin/env python3"
-        ;;
-      go)
-        check_dir "go" 
-        new_gist $1 "//$GOROOT/bin/go run $0 $@ ; exit"
-        ;;
-      bash)
-        check_dir 'bash'
-        new_gist $1 "#!/usr/bin/env bash"
-        ;;
-    esac
-
-  done
-}
-
-new_gist() {
+_new_gist() {
+  # Generates a new gist in the user folder based on the chosen language
   path="${GIST_FOLDER}/${1}"
 
   if [ -e "${path}" ]; then
@@ -82,9 +149,9 @@ new_gist() {
   cat > "${path}" << EOF
 $2
 
-# Created By: Qwertimer
-# Created On: "$(date)"
-# Project: "$1"
+# Created By: $GITUSER
+# Created On: $(date)
+# Project: $1
 EOF
 
   chmod +x "${path}"
@@ -92,13 +159,19 @@ EOF
 
   read -p "Do you wish to push? " yes
   case "${yes}" in
-    y|yes|yep|yeppers|yeah|ok|okay) x.auto_push "$path";;
-    no|n) exit;;
+    y|yes|yep|yeah|ok|okay) 
+      _auto_push "$path"
+      ;;
+    no|n)
+      exit
+      ;;
+
   esac
   exit 0
 
 }
-x.auto_push() {
+_auto_push() {
+  # Autopushes the gist to the github account
   echo $path 
   filename="${path##*/}"
   f="${filename%.*}"
@@ -106,45 +179,43 @@ x.auto_push() {
   gh gist create --public -d $f -f $path $path
 }
 
-HELP[push]='Creates a gist on github.'
 
-x.push() {
-  cd $GIST_DIR
-  file=$(find * -type f | fzf)
+
+_opener() {
+  vim $1 
+  _push_opened $1
+}
+
+_push_opened() {
+
+  read -p "Do you wish to push [(pub)lic|(pri)vate|(n)either]? " yes
+  case "${yes}" in
+    pub|pub*) 
+      _push_pub $1
+      ;;
+    pri|pri*) 
+      _push_priv $1
+      ;;
+    neither|n)
+      exit
+      ;;
+  esac
+}
+
+_push_pub() {
+  file=$1
   filename="${file##*/}"
   f="${filename%.*}"
-  gh gist create --public -d $f -f $GIST_DIR/$file $GIST_DIR/$file
-  
+  gh gist create --public -d $f -f $file $file
 }
 
-x.private_push() {
-  cd $GIST_DIR
-  file=$(find * -type f | fzf)
+_push_priv() {
+  file=$1
   filename="${file##*/}"
   f="${filename%.*}"
-  gh gist create -d $f -f $GIST_DIR/$file $GIST_DIR/$file
   
+  gh gist create --secret -d $f -f $file $file
 }
-
-x.list_local() {
-  : 
-}
-
-x.list_public() {
-  gh gist list --public
-}
-
-
-x.list_private() {
-  gh gist list --secret
-}
-
-x.view_gists() {
-  clear; gh gist view 
-}
-
-
-
 
 
 # -------------------------- utility command -------------------------
