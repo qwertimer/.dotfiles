@@ -47,6 +47,12 @@ x_addDirs() {
     #mkdir -p ~/.gnupg
 
 }
+x_bash() {
+
+  ln -sf "$DOT/bash/.bashrc" "$HOME"
+  ln -sf "$DOT/bash/.bash_prompt" "$HOME/.bash_prompt"
+  ln -sf "$DOT/bash/prompt_configs" "$HOME/prompt_configs"
+}
 
 x_syms() {
 
