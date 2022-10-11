@@ -5,8 +5,9 @@
 # Project: New System Install 
 
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo "script ${BASH_SOURCE[0]} is being sourced ..." \
+  && x.go && x.gum \
   && owncomp=(./install) \
-  && for i in ${owncomp[@]}; do complete -C $i $i; done
+  && for i in ${owncomp[@]}; do complete -C $i $i; done 
   
 
 x.gh() {
@@ -30,12 +31,13 @@ x._gh_arch() {
 
 
 x.base() {
-  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3
-  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3
+  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3 ranger htop
+  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3 ranger htop
 }
 
 x.dev_utils() {
- : 
+  
+  _is_deb && sudo apt install python3
  }
 
 x.fzf() { 
@@ -44,10 +46,12 @@ x.fzf() {
   git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
 }
 x.pip() {
-  curl https://bootstrap.pypa.io/get-pip.py | python
+  curl https://bootstrap.pypa.io/get-pip.py | python3
 }
 x.docker() {
-  _have docker && echo "docker is already on the system " || curl -fsSL get.docker.com | bash
+  _have docker && echo "docker is already on the system " || curl -fsSL get.docker.com | bash 
+  sudo usermod -aG docker $(whoami)
+
 }
 x.lazy_docker() {
   _have lazydocker && echo "lazydocker is already installed" || \
@@ -87,7 +91,18 @@ x.shell_in_a_box() {
   x.docker_siab() {
   :
 }
+x.go() {
+  _have go && echo "go is installed" || go_get
+}
 
+x.gum() {
+  echo installing gum
+  _have go && go install github.com/charmbracelet/gum@latest
+}
+
+x.skate() {
+  _have go && go install github.com/charmbracelet/skate@latest
+}
 
 x.all() {
   x.sys_basics
@@ -105,9 +120,15 @@ _is_arch() { cat /etc/os-release | grep "ID_LIKE" | grep "arch" &>/dev/null; }
 _is_deb() { cat /etc/os-release | grep "ID_LIKE" | grep "debian" &>/dev/null; }
 
 get_go() {
-
-  rm -rf /usr/local/go && tar -C /usr/local -xzf go1.19.linux-amd64.tar.gz
-  grep -qxF 'export PATH=$PATH:/usr/local/go/bin' ~/.bashrc || echo 'export PATH=$PATH:/usr/local/go/bin' && source ~/.bashrc
+  cd /tmp 
+  if [[ -f go1.1* ]]; then
+    echo "Go is downloaded"
+  else
+    wget https://go.dev/dl/go1.19.1.linux-amd64.tar.gz 
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go1.19.1.linux-amd64.tar.gz && rm /tmp/go1*
+    grep -qxF 'export PATH=$PATH:/usr/local/go/bin' ~/.bashrc || echo 'export PATH=$PATH:/usr/local/go/bin' && source ~/.bashrc
+  fi
+  _have go && echo "Go is installed"
 
 }
 
@@ -176,3 +197,4 @@ fi
 #  _alternatives "$@" 
 #  exit $?
 #fi
+
