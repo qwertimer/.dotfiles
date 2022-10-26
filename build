@@ -52,6 +52,11 @@ x_bash() {
   ln -sf "$DOT/bash/.bashrc" "$HOME"
   ln -sf "$DOT/bash/.bash_prompt" "$HOME/.bash_prompt"
   ln -sf "$DOT/bash/prompt_configs" "$HOME/prompt_configs"
+  ln -sf "$DOT/bash/aliases" "$HOME/.aliases"
+
+  ## starship
+  ln -sf "$DOT/bash/starship" "$HOME/.config/starship"
+
 }
 
 x_syms() {

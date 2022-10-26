@@ -1,0 +1,65 @@
+format = """
+$sudo\
+$username\
+$localip\
+[](bg:#16334F fg:#102030)\
+$directory\
+[](fg:#16334F bg:#19546a)\
+$git_branch\
+[](fg:#19546a bg:#1b6d83)\
+$python\
+[](fg:#1b6d83 bg:#1F7F8F)\
+$time\
+$character
+"""
+
+add_newline = true
+
+[character]
+success_symbol = "[](fg:#1F7F8F)"
+error_symbol = "[](fg:#1F7F8F bg:#FF3366)[](fg:#FF3366)"
+
+[sudo]
+disabled = false
+format = "[ $symbol ](#FF3366 bg:#000000)[](bg:#102030 fg:#000000)"
+symbol = "sudo"
+
+[username]
+show_always = false
+style_user = "bold #009999 bg:#102030"
+style_root = "bold #FF3366 bg:#102030"
+format = '[ $user ]($style)'
+
+[localip]
+ssh_only = true
+format = "[@](#999999 bg:#102030)[ $localipv4 ](#009999  bg:#102030)"
+disabled = false
+
+[directory]
+style = "#AAAAAA bg:#16334F"
+format = "[ $path ]($style)"
+truncation_length = 0
+
+# [directory.substitutions]
+# "develop" = ""
+
+[git_branch]
+symbol = ""
+format = '[[ $symbol $branch ](#CCCCCC bg:#19546a)]($style)'
+
+[nodejs]
+symbol = ""
+format = '[[ $symbol ($version) ](#DDDDDD bg:#1b6d83)]($style)'
+
+[python]
+format = '[[ $symbol($version) ](#DDDDDD bg:#1b6d83)]($style)'
+
+[time]
+disabled = false
+time_format = "%R"
+format = '[[ $time ](#EEEEEE bg:#1F7F8F)]($style)'
+
+[cmd_duration]
+disabled = false
+min_time = 5_000
+format = '[ $duration ]($style)'

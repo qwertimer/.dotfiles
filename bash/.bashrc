@@ -340,11 +340,10 @@ export FZF_CTRL_R_OPTS='--sort --exact'
 
 # --------------- personal, work and environment configurations --------------
 
-#for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
-#	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
-#done
-#unset file
-
+for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
+	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
+done
+unset file
 
 # ---------------------------- Program completions ---------------------------
 
