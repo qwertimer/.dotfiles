@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+
+
+# Created By: Qwertimer
+# Created On: "Mon 03 Oct 2022 20:33:34 ACDT"
+# Project: Simple python math
+
+python3 -c "from math import *; print($*)"
+

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Sun 25 Sep 2022 14:42:20 ACST"
+# Project: attach to running tmux clients
+# Note requires gum
+
+SESSION=$(tmux list-sessions -F \#S | gum filter --placeholder "Pick session...")
+tmux switch-client -t $SESSION || tmux attach -t $SESSION

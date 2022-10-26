@@ -11,6 +11,6 @@
 # cheat "$@"
 
 
-curl -sS "http://cht.sh/$1"
+curl -sS "http://cht.sh/$1" | more
 
 

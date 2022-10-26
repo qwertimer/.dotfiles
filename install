@@ -31,8 +31,8 @@ x._gh_arch() {
 
 
 x.base() {
-  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3 ranger htop
-  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3 ranger htop
+  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3 ranger htop starship
+  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3 ranger htop starship
 }
 
 x.dev_utils() {

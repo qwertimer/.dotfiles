@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Sat 24 Sep 2022 12:07:29 ACST"
+# Project: Removes the cursor
+
+printf "\x1B[?25l"

@@ -307,6 +307,10 @@ alias p='vim `fzf --preview="bat --color always {}"`'
 alias sb=". ~/.bashrc"
 alias v=vim
 alias ssha="eval $(ssh-agent)"
+
+grm() {
+  gum confirm && rm $1 || echo 'File not removed'
+}
 # ------------------------- personalised completions -------------------------
 
 owncomp=(
@@ -390,7 +394,8 @@ clone() {
 
 export PATH=$PATH:/usr/local/go/bin
 
-
+export STARSHIP_CONFIG=~/.config/starship/ctt.toml
+eval "$(starship init bash)"
 #eval "$(aactivator init)"
 pls
 

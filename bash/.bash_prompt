@@ -1,4 +1,4 @@
 # Source ps1
-#. ~/.prompt_configs/.ps1_jfrazelle
+. ~/prompt_configs/.ps1_rwxrob
 #. ~/.ps1_jfrazelle
-. ~/prompt_configs/.ps1_random
+# ~/prompt_configs/.ps1_random
