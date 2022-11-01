@@ -5,7 +5,7 @@
 # Project: New System Install 
 
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo "script ${BASH_SOURCE[0]} is being sourced ..." \
-  && x.go && x.gum \
+  && x.go \
   && owncomp=(./install) \
   && for i in ${owncomp[@]}; do complete -C $i $i; done 
   
@@ -31,9 +31,14 @@ x._gh_arch() {
 
 
 x.base() {
-  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3 ranger htop starship
-  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3 ranger htop starship
+  _is_deb && sudo apt install wget curl git lynx w3m tmux vim python3 ranger htop
+  _is_arch && sudo pacman -S wget curl git lynx w3m tmux vim python3 ranger htop
+  starship
 }
+
+starship() {
+  curl -sS https://starship.rs/install.sh | sh	
+	}
 
 x.dev_utils() {
   
@@ -88,7 +93,7 @@ x.shell_in_a_box() {
 
   }
 
-  x.docker_siab() {
+x.docker_siab() {
   :
 }
 x.go() {
