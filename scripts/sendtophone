@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Sat 05 Nov 2022 15:03:23 ACDT"
+# Project:
+#
+
+sudo tailscale file cp $1 thats-what-she-ssid:

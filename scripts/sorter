@@ -1,0 +1,20 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Sat 05 Nov 2022 10:46:30 ACDT"
+# Project:
+#
+f() {
+  sleep "$1"
+  echo "$1"
+}
+
+while [ -n "$1" ]
+do
+  f "$1" &
+  shift
+done
+wait
+
+

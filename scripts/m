@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
 
 # Created By: Qwertimer
 # Created On: "Mon 03 Oct 2022 20:33:34 ACDT"
-# Project: Simple python math
+# Project: less without pipe
 
-python3 -c "from math import *; print($*)"
+less -R < <("$@")
+
 

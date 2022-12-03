@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Mon 21 Nov 2022 12:30:35 ACDT"
+# Project: Listen to youtube
+#
+if [[ -z "$1" ]]; then echo "Enter a search string!"; else mpv "$(youtube-dl --default-search 'ytsearch1:' \"$1\" --get-url | tail -1)"; fi
+

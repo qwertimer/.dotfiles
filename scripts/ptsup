@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Sat 05 Nov 2022 14:45:41 ACDT"
+# Project:
+#
+. ~/.env
+sudo tailscale logout
+sudo tailscale up --authkey $PTSKEY
