@@ -1,0 +1,25 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Thu 24 Nov 2022 09:01:35 ACDT"
+# Project: Set laptop to home setup
+
+options=("homedisp.sh
+multidisp.sh 
+single.sh")
+choice=$(echo -e "${options[@]}" | rofi -dmenu -p 'Which Configuration:' )
+
+case "$choice" in
+    homedisp)
+      ~/.screenlayout/homedisp.sh
+      ;;  
+    multidisp)
+      ~/.screenlayout/multidisp.sh
+      ;;  
+    single)
+      ~/.screenlayout/single.sh
+      ;;  
+esac
+
+feh --bg-fill --randomize ~/.wallpaper/*

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Fri 04 Nov 2022 11:34:31 ACDT"
+# Project:
+
+exec git "$@"

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Wed 12 Oct 2022 08:25:14 ACDT"
+# Project:
+monoverse="/home/tim/repos/gitlab.com/timdell/monoverse"
+
+entr -c bash -c "cd $monoverse/eros; make build-only 2>&1 | tee /tmp/err; cat /tmp/err | sed -n '/# gitlab/,/make/{//!p}' | tee /tmp/out; notify-send \"make completed\"  \"$(cat /tmp/out)\";"< <(find . -name "*.go")
+
+

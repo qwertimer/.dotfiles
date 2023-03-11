@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Mon 09 Jan 2023 07:02:07 ACDT"
+# Project: build golang packages when golang is broken
+
+docker run -v /home/tim/repos/gitlab.com/timdell/monoverse:/app -it portal_builder go build -o ./portal portal/portal

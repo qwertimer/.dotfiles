@@ -8,7 +8,11 @@
   && x.go \
   && owncomp=(./install) \
   && for i in ${owncomp[@]}; do complete -C $i $i; done 
-  
+
+x.get_autocompletions() {
+  curl https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash -o ~/.git-completion.bash
+  terraform -install-autocomplete
+}  
 
 x.gh() {
   _have gh && echo "gh is already installed" && exit
@@ -90,23 +94,10 @@ x.shell_in_a_box() {
   _have shellinabox && echo "shellinabox is already installed" && exit
   _is_deb && sudo apt-get install shellinabox 
   _is_arch && echo "shell_in_a_box doesn't exist on arch" && x.docker_siab
-
   }
 
-x.docker_siab() {
-  :
-}
 x.go() {
   _have go && echo "go is installed" || go_get
-}
-
-x.gum() {
-  echo installing gum
-  _have go && go install github.com/charmbracelet/gum@latest
-}
-
-x.skate() {
-  _have go && go install github.com/charmbracelet/skate@latest
 }
 
 x.all() {

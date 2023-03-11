@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Tue 10 Jan 2023 12:20:38 ACDT"
+# Project:
+
+_have()      { type "$1" &>/dev/null; }
+
+_have $1

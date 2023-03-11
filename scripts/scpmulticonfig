@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Wed 04 Jan 2023 15:55:37 ACDT"
+# Project:
+
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Wed 21 Dec 2022 13:45:06 ACDT"
+# Project:
+
+
+while read host; do
+  scp -r $1 root@${host}:/etc/eros/eros.yaml
+done

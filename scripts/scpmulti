@@ -1,0 +1,12 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Wed 21 Dec 2022 13:45:06 ACDT"
+# Project:
+# To run type scpmulti <file> <host where host is the ip addresses
+set -o
+
+while read host; do
+  scp -r $1 root@${host}:/home/fleet/erosDatabase/
+done

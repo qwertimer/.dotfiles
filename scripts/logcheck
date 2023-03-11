@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Mon 09 Jan 2023 15:53:23 ACDT"
+# Project:
+
+sshpass -f ~/.modem ssh root@192.168.$1 "journalctl -$2 -u eros_client | grep --color -i -E \"$3\""
+

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Thu 01 Dec 2022 15:34:48 ACDT"
+# Project: 
+
+CONTAINER_NAME='python_docker'
+CID=$(docker ps -a --format {{.Names}} | grep python_docker -w)
+if [ ! "${CID}" ]; then
+  docker run -it -v $PWD:/app --name python_docker python
+else
+  docker start python_docker && docker attach python_docker
+fi

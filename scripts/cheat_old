@@ -1,0 +1,5 @@
+#!/bin/sh
+
+curl -sS "http://cht.sh/$1" | more
+
+

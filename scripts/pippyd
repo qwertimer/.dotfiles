@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Thu 01 Dec 2022 15:37:20 ACDT"
+# Project: Sideload python packages into docker container
+
+docker exec python_docker pip install $1
