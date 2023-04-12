@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# Developed by Qwertimer
-# Rather than an alias using commands for everything
-nordvpn disconnect

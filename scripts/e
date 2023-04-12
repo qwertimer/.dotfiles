@@ -33,6 +33,9 @@ check() {
     t | tmux)
       file="$HOME/.tmux.conf"
       ;;
+    as)
+      file="$HOME/.config/bspwm/sxhkdrc"
+      ;;
   esac
   _is_file "$file" && edit "$file" || exit
 }

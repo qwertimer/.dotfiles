@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Thu 26 Jan 2023 23:13:03 ACDT"
+# Project:
+#
+youtube-dl --extract-audio --audio-format mp3 $1

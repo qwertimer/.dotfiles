@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Wed 12 Apr 2023 22:41:04 ACST"
+# Project: interactive postmortem for python
+#
+python3 -m ipdb -c continue $1

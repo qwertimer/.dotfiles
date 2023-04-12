@@ -1,5 +1,0 @@
-#!/bin/bash
-#xmodmap -pm -e 'add Mod3 = Menu'
-
-
-xmodmap -pm -e 'delete Mod3 = Menu'

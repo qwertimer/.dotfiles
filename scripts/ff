@@ -2,8 +2,8 @@
 xhost +"local:docker@"
 	docker run \
 		--rm \
-		--memory 2gb \
-		--network=container:gluetun \
+		--memory 4gb \
+		--network=container:vpn \
 		--cpuset-cpus 0 \
 		-v /etc/localtime:/etc/localtime:ro \
 		-v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -17,5 +17,5 @@ xhost +"local:docker@"
 		--device /dev/dri \
 		--name test \
 		ff "$@"
-
 ## -v "${HOME}/.firefox/cache:/root/.cache/mozilla" \
+#
