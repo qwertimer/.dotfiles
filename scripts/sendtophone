@@ -6,4 +6,5 @@
 # Project:
 #
 
-sudo tailscale file cp $1 thats-what-she-ssid:
+
+sudo tailscale file cp $* thats-what-she-ssid:

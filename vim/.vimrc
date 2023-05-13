@@ -140,6 +140,7 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'rwxrob/vim-pandoc-syntax-simple'
   Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
   Plug 'tpope/vim-fugitive'
+  Plug 'christoomey/vim-conflicted'
   Plug 'mhinz/vim-startify'
   Plug 'mbbill/undotree'
   Plug 'joshdick/onedark.vim'
@@ -149,14 +150,13 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   Plug 'dense-analysis/ale'
   Plug 'itchyny/lightline.vim'
   Plug 'stephpy/vim-yaml'
-
   call plug#end()
 
   """""""""""""""""""""""""""""""""""""
   "lightline
   """""""""""""""""""""""""""""""""""""
   let g:lightline = {
-  \ 'colorscheme': 'onedark',
+  \ 'colorscheme': 'neodark',
   \}
   """"""""""""""""""""""""""""""""""""
   " rainbox
@@ -186,11 +186,13 @@ if filereadable(expand("~/.vim/autoload/plug.vim"))
   let g:go_highlight_diagnostic_warnings = 1
   "let g:go_auto_type_info = 1 " forces 'Press ENTER' too much
   let g:go_auto_sameids = 0
-  "let g:go_metalinter_command='golangci-lint'
-  "let g:go_metalinter_command='golint'
-  "let g:go_metalinter_autosave=1
+  let g:go_metalinter_command='golangci-lint'
+  let g:go_metalinter_command='golint'
+  let g:go_metalinter_autosave=1
+  let g:go_def_mode='gopls'
+  let g:go_info_mode='gopls'
   set updatetime=100
-  "let g:go_gopls_analyses = { 'composites' : v:false }
+  let g:go_gopls_analyses = { 'composites' : v:false }
   augroup go
     autocmd!
     au FileType go nmap <leader>t :GoTest!<CR>
@@ -223,7 +225,7 @@ if $COLORTERM == 'alacritty'
 endif
 
 set background=dark
-colorscheme onedark
+colorscheme neodark
 
 " Set extra options when running in GUI mode
 if has("gui_running")
@@ -245,34 +247,7 @@ highlight Normal guibg=black guifg=white
 hi Normal ctermbg=None
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Undo Tree 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"UndoTree mapping to F5 for multi tree undo and redo
-"nnoremap <F5> :UndotreeToggle<CR>
-"
-"
-
-
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Visual search and replace
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"Need visualselection tool
-"vnoremap <silent> <leader>r :call VisualSelection('replace', '')<CR>
-
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Random
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" fill in empty markdown links with duck.com search
-" [some thing]() -> [some thing](https://duck.com/lite?kae=t&q=some thing)
-" s,/foo,/bar,g
-autocmd vimleavepre *.md !perl -p -i -e 's,\[([^\]]+)\]\(\),[\1](https://duck.com/lite?kd=-1&kp=-1&q=\1),g' %
-
 "au FileType python !bash echo -e "#!/usr/bin/python\n# *-* coding: utf-8 *-*\n\nif __name__ == "__main__":\n\t"
-"turn emoji :pomo: etc into actual emojis
-autocmd BufWritePost *.md !toemoji % 
 
 " make Y consitent with D and C (yank til end)
 map Y y$
@@ -286,14 +261,6 @@ nnoremap <C-L> :nohl<CR><C-L>
 " enable omni-completion
 set omnifunc=syntaxcomplete#Complete
 
-" format perl on save
-fun! s:Perltidy()
-  let l:pos = getcurpos()
-  silent execute '%!perltidy -i=2'
-  call setpos('.', l:pos)
-endfun
-"autocmd FileType perl autocmd BufWritePre <buffer> call s:Perltidy()
-
 " force some file names to be specific file type
 au bufnewfile,bufRead *.bash* set ft=sh
 au bufnewfile,bufRead *.{peg,pegn} set ft=config
@@ -304,16 +271,6 @@ au bufnewfile,bufRead .dockerignore set filetype=gitignore
 au bufnewfile,bufRead *gitconfig set filetype=gitconfig
 au bufnewfile,bufRead /tmp/psql.edit.* set syntax=sql
 au bufnewfile,bufRead doc.go set spell
-
-
-" displays all the syntax rules for current position, useful
-" when writing vimscript syntax plugins
-function! <SID>SynStack()
-  if !exists("*synstack")
-    return
-  endif
-    echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
-endfunc
 
 " start at last place you were editing
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
@@ -365,7 +322,7 @@ map <leader>s? z=
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Misc
+" => Misc -- leader mappings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Remove the Windows ^M - when the encodings gets messed up
 noremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
@@ -376,9 +333,13 @@ map <leader>q :e ~/buffer<cr>
 " Quickly open a markdown buffer for scribble
 map <leader>x :e ~/buffer.md<cr>
 
+map <leader>z :!zet create<cr>
+
 " Toggle paste mode on and off
 map <leader>pp :setlocal paste!<cr>
 
+map <leader>^ :e Ctrl-r #<cr>
+map <leader>r :reg<cr>
 
 
 "=================================================================================
@@ -460,7 +421,9 @@ nnoremap <down> <C-x>
 noremap <C-n> <C-d>
 noremap <C-p> <C-b>
 
-
+"Move vertical between rows with word wrapping
+nnoremap j gj
+nnoremap k gk
 " --------------------------- qwertimer's Configurations ---------------------------
 
 "ab is used for autocorrect and autofill
