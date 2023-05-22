@@ -21,7 +21,7 @@ if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
     fi
     tmux new-window -t $session:9 
     tmux send -t $session:9 "printf '\ec'" Enter
-    tmux send -t $session:9 "w3m 'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
+    tmux send -t $session:9 "lynx 'https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*'" Enter
     tmux select-window -t $session:9
 
     if [ $val = "vim" ]; then 
@@ -29,5 +29,5 @@ if ! test "$TERM" = "screen" && test -n "$TMUX" ;  then
     fi
 else
     printf '\ec'
-    w3m "https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*"
+    lynx "https://lite.duckduckgo.com/lite?kd=-1&kp=-1&q=$*"
 fi
