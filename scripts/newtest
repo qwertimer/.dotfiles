@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Sat 13 May 2023 13:57:18 ACST"
+# Project: Tool to create a new folder in a test directory, build
+# a docker container and mount the directory in the container.
+#
+
+# Make a directory for the new project
+new_project() {
+  mkdir -p ~/projects/$1 && cd "$_"
+  choice=$(gum choose "go" "python") || exit
+  echo $choice
+  if [ $choice == 'go' ]; then
+    cat << EOF > dockerfile
+FROM golang:1.19
+COPY . /app
+RUN apt update
+RUN apt install -y vim
+WORKDIR /app
+EOF
+  elif [ $choice == 'python' ]; then
+    cat << EOF > dockerfile
+FROM python:3.10
+RUN apt update
+RUN apt install -y vim
+WORKDIR /app
+EOF
+  fi
+  docker build -t $1 .
+  docker run -it -v $(pwd):/app $1 /bin/bash
+}
+
+
+new_project $1
