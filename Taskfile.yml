@@ -1,0 +1,83 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+  scripts_link:
+    desc: Adds scripts to $HOME/.local/bin
+    cmds:
+      - echo "Setting Scripts variable and adding scripts to path"
+      - export SCRIPTS=~/.local/bin/scripts
+      - if [ ! -d "$HOME/.local/bin" ]; then mkdir -p "$HOME/.local/bin"; fi
+      - ln -sf "$PWD/scripts" "$HOME/.local/bin/"
+
+  bashrc:
+    desc: Adds symlinks for bashrc items
+    cmds:
+      - ln -sf "$DOT/bash/.bashrc" "$HOME"
+      - ln -sf "$DOT/bash/.bash_prompt" "$HOME/.bash_prompt"
+      - ln -sf "$DOT/bash/prompt_configs" "$HOME/prompt_configs"
+      - ln -sf "$DOT/bash/aliases" "$HOME/.aliases"
+      - ln -sf "$DOT/bash/starship" "$HOME/.config/starship"
+
+  symlinks:
+    desc: adds symlinks for tmux and vim
+    cmds:
+      - ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
+      - ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
+      - ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
+      - ln -sf "$DOT/vim/.vimrc" "$HOME/.sshrc.d"
+
+  addDirs:
+    desc: Adds basic directories for the dotfiles
+    cmds:
+      - mkdir -p $HOME/.sshrc.d
+      - mkdir -p $HOME/.local/share/ansible
+      - mkdir -p $HOME/.bash_completion.d
+      - mkdir -p $HOME/.config/bspwm
+      - mkdir -p $HOME/.config/sxhkd
+      - mkdir -p $HOME/.config/polybar
+
+  pip:
+    desc: Installs pip
+    summary: |
+      Installs pip
+
+      Uses bootstrap pypa to install the version of pip for the installed
+      version of python.
+    cmds:
+      - curl https://bootstrap.pypa.io/get-pip.py | python
+
+  go: 
+    desc: Installs the latest version of go.
+    env:
+      GOVER: $(curl https://go.dev/VERSION?m=text)
+    cmds:
+      - wget "https://dl.google.com/go/$(curl https://go.dev/VERSION?m=text).linux-amd64.tar.gz"
+      - sudo rm -rf /usr/local/go && tar -C /usr/local -xzf $GOVER.linux-amd64.tar.gz
+
+  gover:
+    cmds:
+      - go version
+    status:
+      - go version | grep "go version"
+
+  ansible:
+    cmds:
+      - python3 -m pip install ansible
+
+  nap:
+    deps: [gover]
+    summary: |
+      Installs nap
+
+      snippet tool for storing all my snippets.
+      (https://github.com/maaslalani/nap)
+
+    cmds:
+      - go install github.com/maaslalani/nap@main
+      - ln -sr "$DOT/.nap" "$HOME"
+
+  
+

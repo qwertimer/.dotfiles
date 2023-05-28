@@ -18,6 +18,11 @@ x__pathappend() {
   done
 }
 
+x_nap() {
+  go install github.com/maaslalani/nap@main
+  ln -sr "$DOT/.nap" "$HOME"
+}
+
 x_scripts() {
     
     echo "Setting Scripts variable and adding scripts to path"
@@ -107,13 +112,14 @@ x_fz_tools() {
 x_comp_syms() {
 
 # ---------------------------- ansible_completion ----------------------------
-  ln -sf "$DOT/completions/ansible-completion/" "$HOME/.local/share/ansible/ansible-completion"
 
 # -------------------------------- Completions -------------------------------
-
+  mkdir ~/.bash_completion.d
   ln -sf "$DOT/completions/z.sh" "$HOME/.bash_completion.d/z.sh"
   ln -sf "$DOT/completions/fz.sh" "$HOME/.bash_completion.d/fz.sh"
   ln -sf "$DOT/completions/gh/.gh_comp" "$HOME/"
+  ln -sf "$DOT/completions/task.bash" "$HOME/"
+  ln -sf "$DOT/completions/ansible-completion/" "$HOME/.local/share/ansible/ansible-completion"
 }
 
 x_usage() {
