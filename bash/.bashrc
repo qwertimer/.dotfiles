@@ -308,6 +308,18 @@ alias sb=". ~/.bashrc"
 alias v=vim
 alias ssha="eval $(ssh-agent)"
 
+alias multi="$HOME/.screenlayout/multidisp.sh"
+alias single="$HOME/.screenlayout/single.sh"
+alias home="$HOME/.screenlayout/homedisp.sh"
+alias sm="single && multi"
+
+#git aliases
+alias gc="git commit"
+alias ga="git add -p"
+alias gco="git checkout"
+alias gp="git push"
+alias python="python3"
+
 grm() {
   gum confirm && rm $1 || echo 'File not removed'
 }
@@ -316,7 +328,7 @@ grm() {
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
-  venvwrap n .dockerfunc gister
+  venvwrap n .dockerfunc gister build.sh
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
@@ -340,7 +352,7 @@ export FZF_CTRL_R_OPTS='--sort --exact'
 
 # --------------- personal, work and environment configurations --------------
 
-for file in ~/.{bash_prompt,aliases,functions,path,extra,exports,dockerfunc}; do
+for file in ~/.{bash_prompt,bash_aliases,aliases,functions,path,extra,exports,dockerfunc}; do
 	[[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
 done
 unset file
@@ -348,14 +360,14 @@ unset file
 # ---------------------------- Program completions ---------------------------
 
 _source_if "/etc/profile.d/bash_completion.sh"
+_source_if "~/.git-completion.bash"
 _have gh && . <(gh completion -s bash)
 _have pandoc && . <(pandoc --bash-completion)
 _have yq && . <(yq shell-completion bash)
 _have docker && _source_if "$HOME/.local/share/docker/completion" # d
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-completion.bash" 
 _have ansible && _source_if "$HOME/.local/share/ansible/ansible-completion/ansible-playbook-completion.bash"
-
-source /home/tim/.bash_completions/pls.sh
+#source /home/tim/.bash_completions/pls.sh
 # Add tab completion for SSH hostnames based on ~/.ssh/config
 # ignoring wildcards
 [[ -e "$HOME/.ssh/config" ]] && complete -o "default" \
@@ -391,10 +403,14 @@ clone() {
   cd "$name"
 } && export -f clone
 
-export PATH=$PATH:/usr/local/go/bin
+export STARSHIP_CONFIG=~/.config/starship/catppuccin.toml
 
-export STARSHIP_CONFIG=~/.config/starship/ctt.toml
 eval "$(starship init bash)"
 #eval "$(aactivator init)"
-pls
+#pls
 
+alias bd=". bd -si"
+
+. /usr/share/autojump/autojump.bash
+
+export PATH=$PATH:/home/tim/.spicetify
