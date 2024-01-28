@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Thu 20 Jul 2023 21:38:49 ACST"
+# Project:
+#
+#
+xhost + XSOCK=/tmp/.X11-unix/X0
+sudo docker run -it -v $XSOCK:$XSOCK kb1oiq/gpredict

@@ -88,6 +88,7 @@ shopt -s extglob
 #shopt -s nullglob # bug kills completion for some
 #set -o noclobber
 shopt -s histappend
+shopt -s autocd  # cd without cd
 
 
 # ----------------------------------- pager ----------------------------------
@@ -263,6 +264,7 @@ fi
 
 alias vi=vim
 alias ldir="ls -d */"
+alias ls="ls -a --color"
 
 #Make ip have colours
 alias ip='ip -br -c'
@@ -301,6 +303,8 @@ alias v=vim
 alias ssha="eval $(ssh-agent)"
 alias napf="nap list | gum filter | xargs nap"
 alias bd=". bd -si"
+
+alias cat="bat -p"
 
 grm() {
   gum confirm && rm $1 || echo 'File not removed'
@@ -352,8 +356,8 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 --color=info:#af87ff,prompt:#5fff87,pointer:#ff87d7,marker:#ff87d7,spinner:#ff87d7
 '
 
-export FZF_DEFAULT_COMMAND="fd . $HOME"
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# export FZF_DEFAULT_COMMAND="fd . $HOME"
+# export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 export FZF_CTRL_R_OPTS='--sort --exact'
 

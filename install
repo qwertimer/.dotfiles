@@ -97,7 +97,8 @@ x.shell_in_a_box() {
   }
 
 x.go() {
-  _have go && echo "go is installed" || go_get
+  get_go
+  #_have go && echo "go is installed" || get_go
 }
 
 x.all() {
@@ -120,8 +121,8 @@ get_go() {
   if [[ -f go1.1* ]]; then
     echo "Go is downloaded"
   else
-    wget https://go.dev/dl/go1.19.1.linux-amd64.tar.gz 
-    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go1.19.1.linux-amd64.tar.gz && rm /tmp/go1*
+    wget https://go.dev/dl/go1.21.3.linux-amd64.tar.gz 
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go1.21.3.linux-amd64.tar.gz && rm /tmp/go1*
     grep -qxF 'export PATH=$PATH:/usr/local/go/bin' ~/.bashrc || echo 'export PATH=$PATH:/usr/local/go/bin' && source ~/.bashrc
   fi
   _have go && echo "Go is installed"
