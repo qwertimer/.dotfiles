@@ -1,2 +1,0 @@
-#!/bin/bash
-wget -qO - wttr.in/adelaide,australia?format=2
