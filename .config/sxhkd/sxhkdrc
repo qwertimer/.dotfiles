@@ -1,9 +1,10 @@
 # wm independent hotkeys
-
 # shutdown
 ctrl + alt + Delete
   alacritty -e shutdown now
 
+super + ctrl + F4
+  pavucontrol
 # Config Editor with rofi
 super + comma
   $HOME/.local/bin/scripts/editconfs
@@ -24,10 +25,6 @@ super + Return
 super + s
   gnome-control-center
 
-#
-#super + {n}
-#  terminews
-
 # launch files, program launcher
 super + {f, r, w, }
   {nautilus, rofi -show drun, firefox}
@@ -39,10 +36,6 @@ alt + {1, 2, 3, 4, 5, 6, 7, 8, 9, 0}
 # Close screen
 super + shift + c
   sleep 0.5; xset dpms force standby
-
-# Lock screen
-#super + l
-#  betterlockscreen -l 
 
 super + l
   slock 
@@ -59,7 +52,8 @@ super + p
 	flameshot full -p ~/Pictures/screenshots
 
 # print location
-super + shift + p
+
+super + ctrl + l
 	flameshot gui -p ~/Pictures/screenshots
 
 

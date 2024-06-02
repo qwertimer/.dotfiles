@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# ---------------------------- delegation ----------------------------
+
+declare cmd="$1"; shift
+for c in ${COMMANDS[@]}; do
+    if [[ $c == "$cmd" ]]; then
+      "_$cmd" "$@"
+      exit $?
+    fi
+done
+
+

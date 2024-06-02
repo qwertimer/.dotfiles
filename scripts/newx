@@ -15,7 +15,6 @@ fi
 cat > "${path}" << EOF
 #!/bin/bash
 
-
 # Created By: Qwertimer
 # Created On: "$(date)"
 # Project:

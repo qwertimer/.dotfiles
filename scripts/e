@@ -14,7 +14,8 @@ check() {
       ;;
 
     sxhkd | s)
-      file="$HOME/.config/sxhkd/sxhkdrc"
+      #file="$HOME/.config/sxhkd/sxhkdrc"
+      file="$HOME/.config/bspwm/sxhkdrc"
       ;;
 
     bsp*)

@@ -29,15 +29,10 @@ export REPOS="$HOME/repos"
 export GHREPOS="$REPOS/github.com/$GITUSER"
 export DOTFILES="$GHREPOS/.dotfiles"
 export ZETDIR="$GHREPOS/zet"
-export SNIPPETS="$DOTFILES/snippets"
 export TASKS="$DOTFILES/tasks"
 export SCRIPTS="$HOME/.local/bin/scripts"
 export PDFS="$DOCUMENTS/PDFS"
 export WORKSPACES="$HOME/Workspaces" # container home dirs for mounting
-## rwxrob clip program..... 
-export CLIP_DIR="$VIDEOS/Clips"
-export CLIP_DATA="$GHREPOS/cmd-clip/data"
-export CLIP_VOLUME=0
 
 # terminal stuff
 export TERM=xterm-256color
@@ -50,9 +45,8 @@ export EDITOR_PREFIX=vim
 
 #browser defaults
 export HELP_BROWSER=lynx
-
 #grep
-#export GREP_OPTIONS=' — color=auto'
+export GREP_OPTIONS=' — color=auto'
 
 # ------------------------ programmming env variables ------------------------
 
@@ -75,7 +69,6 @@ export PICO_PLAYGROUND_PATH=$HOME/Documents/pico/pico/pico-playground
 export GEM_HOME="$HOME/gems"
 
 
-alias vi=vim
 # ---------------------------------- history ---------------------------------
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -95,6 +88,7 @@ shopt -s extglob
 #shopt -s nullglob # bug kills completion for some
 #set -o noclobber
 shopt -s histappend
+shopt -s autocd  # cd without cd
 
 
 # ----------------------------------- pager ----------------------------------
@@ -133,7 +127,7 @@ fi
 
 # --------------------------- smart prompt ---------------------------
 #. ~/.ps1_christmas
-. ~/.bash_prompt
+#. ~/.bash_prompt
 #. ~/.ps1_jfrazelle
 #PROMPT_COMMAND="__ps1"
 # ------------------------- Path add/remove functions ------------------------
@@ -173,15 +167,16 @@ mkdir -p "$SCRIPTS" &>/dev/null
 
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH 
 
-
 pathprepend \
   ~/.local/bin \
   "$SCRIPTS" \
+  ~/.local/bin/rwxrobz \
   ~/.poetry/bin \
   /usr/local/go/bin
 
 pathappend \
       /usr/local/opt/coreutils/libexec/gnubin \
+      /home/tim/.local/share/gem/ruby/3.0.0/bin \
       /usr/local/bin \
       /usr/local/sbin \
       /usr/games \
@@ -228,17 +223,17 @@ _have ncdu && alias ncdu="ncdu --color=dark"
 export FZF_DEFAULT_COMMAND='fd . -path './.git' -prune -o -print $HOME'
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 
-_fzf_comprun() {
-  local command=$1
-  shift
-
-  case "$command" in
-    cd)           fzf "$@" --preview 'tree -C {} | head -200' ;;
-    export|unset) fzf "$@" --preview "eval 'echo \$'{}" ;;
-    ssh)          fzf "$@" --preview 'dig {}' ;;
-    *)            fzf "$@" ;;
-  esac
-}
+#_fzf_comprun() {
+#  local command=$1
+#  shift
+#
+#  case "$command" in
+#    cd)           fzf "$@" --preview 'tree -C {} | head -200' ;;
+#    export|unset) fzf "$@" --preview "eval 'echo \$'{}" ;;
+#    ssh)          fzf "$@" --preview 'dig {}' ;;
+#    *)            fzf "$@" ;;
+#  esac
+#}
 export PATH="$HOME/gems/bin:$PATH"
 
 
@@ -265,10 +260,11 @@ if ! shopt -oq posix; then
 fi
 
 
-
 # --------------------------------- aliases  ---------------------------------
 
+alias vi=vim
 alias ldir="ls -d */"
+alias ls="ls -a --color"
 
 #Make ip have colours
 alias ip='ip -br -c'
@@ -278,7 +274,6 @@ alias scripts='cd $SCRIPTS'
 alias dot='cd $DOTFILES' 
 alias tasks='cd $TASKS'
 alias zets='cd ~/.local/share/zet/'
-alias snippets='cd "$SNIPPETS"'
 
 #lynx search
 alias ?='duck'
@@ -293,13 +288,12 @@ alias st="taskman listtasks"
 alias nt="taskman newtask"
 alias ct="taskman closetask"
 alias vt="taskman viewtask"
+
 alias ifu="ifuse ~/iphone"
 
 alias view="vi -R"
-alias sshh='sshpass -f $HOME/.sshpass ssh '
-alias temp='cd $(mktemp -d)'
 
-alias poly="cd ~/repos/github.com/polydatum"
+alias temp='cd $(mktemp -d)'
 
 export FZF_DEFAULT_COMMAND="find ."
 alias p='vim `fzf --preview="bat --color always {}"`'
@@ -307,24 +301,53 @@ alias p='vim `fzf --preview="bat --color always {}"`'
 alias sb=". ~/.bashrc"
 alias v=vim
 alias ssha="eval $(ssh-agent)"
+alias napf="nap list | gum filter | xargs nap"
+alias bd=". bd -si"
+
+alias cat="bat -p"
 
 grm() {
   gum confirm && rm $1 || echo 'File not removed'
-}
+} 
+
+
+clone() {
+  local repo="$1" user
+  local repo="${repo#https://github.com/}"
+  local repo="${repo#git@github.com:}"
+  if [[ $repo =~ / ]]; then
+    user="${repo%%/*}"
+  else
+    user="$GITUSER"
+    [[ -z "$user" ]] && user="$USER"
+  fi
+  local name="${repo##*/}"
+  local userd="$REPOS/github.com/$user"
+  local path="$userd/$name"
+  [[ -d "$path" ]] && cd "$path" && return
+  mkdir -p "$userd"
+  cd "$userd"
+  echo gh repo clone "$user/$name" -- --recurse-submodule
+  gh repo clone "$user/$name" -- --recurse-submodule
+  cd "$name"
+} && export -f clone
 # ------------------------- personalised completions -------------------------
 
 owncomp=(
   pdf md yt gl kn auth pomo config taskman 
   sshkey ws ./build build b ./setup zet ix2me
-  venvwrap n .dockerfunc gister
+  venvwrap n .dockerfunc gister z
 )
 
 for i in ${owncomp[@]}; do complete -C $i $i; done
 
 
 # ----------------------------------- other ----------------------------------
-source "$DOTFILES/snippets/sh/colours"
+# source "$DOTFILES/snippets/sh/colours"
 
+# -------------------------------- nap exports -------------------------
+export NAP_CONFIG="~/.nap/config.yaml"
+export NAP_HOME="~/.nap"
 
 # -------------------------------- fzf configs -------------------------------
 export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
@@ -333,8 +356,8 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 --color=info:#af87ff,prompt:#5fff87,pointer:#ff87d7,marker:#ff87d7,spinner:#ff87d7
 '
 
-export FZF_DEFAULT_COMMAND="fd . $HOME"
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# export FZF_DEFAULT_COMMAND="fd . $HOME"
+# export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 export FZF_CTRL_R_OPTS='--sort --exact'
 
@@ -363,38 +386,17 @@ source /home/tim/.bash_completions/pls.sh
 	-W "$(grep "^Host" ~/.ssh/config | \
 	grep -v "[?*]" | cut -d " " -f2 | \
 	tr ' ' '\n')" scp sftp ssh
+
 POWERLINE=false
 if $POWERLINE == true; then
   . /home/tim/.local/bin/powerline/bindings/bash/powerline.sh
 fi
-#Fun note on each open
 complete -C /usr/local/bin/bit bit
 
-clone() {
-  local repo="$1" user
-  local repo="${repo#https://github.com/}"
-  local repo="${repo#git@github.com:}"
-  if [[ $repo =~ / ]]; then
-    user="${repo%%/*}"
-  else
-    user="$GITUSER"
-    [[ -z "$user" ]] && user="$USER"
-  fi
-  local name="${repo##*/}"
-  local userd="$REPOS/github.com/$user"
-  local path="$userd/$name"
-  [[ -d "$path" ]] && cd "$path" && return
-  mkdir -p "$userd"
-  cd "$userd"
-  echo gh repo clone "$user/$name" -- --recurse-submodule
-  gh repo clone "$user/$name" -- --recurse-submodule
-  cd "$name"
-} && export -f clone
 
 export PATH=$PATH:/usr/local/go/bin
 
 export STARSHIP_CONFIG=~/.config/starship/ctt.toml
 eval "$(starship init bash)"
-#eval "$(aactivator init)"
-pls
 
+[[ -s /etc/profile.d/autojump.sh ]] && source /etc/profile.d/autojump.sh

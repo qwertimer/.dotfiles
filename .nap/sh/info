@@ -1,0 +1,10 @@
+#!/bin/bash
+
+case "$@" in;
+  -info)
+    info
+    ;;
+  *)
+    main "$@"
+    ;;
+esac

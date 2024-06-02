@@ -14,9 +14,6 @@ suit a particular task i was working on. Finally some commands seem a
 little wasteful such as d which is to run docker however this is to
 have programs that are useable in scripts without the bashrc file.
 
-Soon i will have a searchable system outlining all of my scripts. This
-program will list all commands and the default description of what they
-do.
 
 ## Install
 
