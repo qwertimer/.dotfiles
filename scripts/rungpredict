@@ -6,5 +6,8 @@
 # Project:
 #
 #
-xhost + XSOCK=/tmp/.X11-unix/X0
-sudo docker run -it -v $XSOCK:$XSOCK kb1oiq/gpredict
+xhost+
+XSOCK=/tmp/.X11-unix/X0
+sudo docker run -it -v $XSOCK:$XSOCK \
+kb1oiq/gpredict
+
