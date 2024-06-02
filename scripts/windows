@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+# Created By: Qwertimer
+# Created On: "Fri 24 Mar 2023 07:44:07 ACDT"
+# Project:
+
+cd ~/Documents/emu
+quickemu -vm windows-10.conf

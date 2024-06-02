@@ -97,8 +97,8 @@ x.shell_in_a_box() {
   }
 
 x.go() {
-  get_go
-  #_have go && echo "go is installed" || get_go
+
+  _have go && echo "go is installed" || get_go
 }
 
 x.all() {
@@ -114,7 +114,7 @@ x.all() {
 # --------------------------------- Utilities --------------------------------
 
 _is_arch() { cat /etc/os-release | grep "ID_LIKE" | grep "arch" &>/dev/null; }
-_is_deb() { cat /etc/os-release | grep "ID_LIKE" | grep "debian" &>/dev/null; }
+_is_deb() { cat /etc/os-release | grep "ID" | grep "debian" &>/dev/null; }
 
 get_go() {
   cd /tmp 

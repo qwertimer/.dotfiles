@@ -42,7 +42,7 @@ x_scripts() {
 
 x_addDirs() {
     mkdir -p $HOME/.sshrc.d
-    mkdir -p $HOME/.local/share/ansible
+    #mkdir -p $HOME/.local/share/ansible
     mkdir -p $HOME/.bash_completion.d
     mkdir -p $HOME/.config/bspwm
     mkdir -p $HOME/.config/sxhkd
