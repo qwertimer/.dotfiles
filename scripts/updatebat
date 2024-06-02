@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Sun 02 Jun 2024 21:55:42 ACST"
+# Project: updatebat: updates bat with colours: catpuccin
+#
+
+_have(){ type "$1" &>/dev/null; }
+
+_have bat || exit
+mkdir -p "$(bat --config-dir)/themes"
+wget -P "$(bat --config-dir)/themes" https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Latte.tmTheme
+wget -P "$(bat --config-dir)/themes" https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Frappe.tmTheme
+wget -P "$(bat --config-dir)/themes" https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Macchiato.tmTheme
+wget -P "$(bat --config-dir)/themes" https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Mocha.tmTheme
+bat cache --build

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Sun 02 Jun 2024 22:02:45 ACST"
+# Project: Search utility for my scripts
+#
+#
+cd ~/.local/bin/scripts && fzf --preview 'bat --style numbers,changes --color=always --theme="Catppuccin Mocha" {}'
