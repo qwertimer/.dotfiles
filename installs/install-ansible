@@ -1,6 +1,22 @@
 #!/bin/sh
 
-🐧🏡 Linux Homelab Init - Install CRI-O with Ansible from debs`sudo add-apt-repository --yes --update ppa:ansible/ansible
+#🐧🏡 Linux Homelab Init - Install CRI-O with Ansible from debs`sudo add-apt-repository --yes --update ppa:ansible/ansible
+
+ubuntu_install() {
 sudo apt install ansible
 sudo apt install python3-argcomplete
 sudo activate-global-python-argcomplete3
+}
+
+arch_install() {
+    sudo pacman -S ansible python3-argcomplete
+    sudo activate-global-python-argcomplete3
+}
+
+. ./package_man
+if [[ $installer -eq "pacman" ]]; then
+    echo $installer
+    arch_install
+else
+    ubuntu_install
+fi
