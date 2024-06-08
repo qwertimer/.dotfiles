@@ -21,6 +21,9 @@ check() {
     bsp*)
       file="$HOME/.config/bspwm/bspwmrc"
       ;;
+    i)
+      file="$HOME/.config/i3/config"
+      ;;
     wm)
       ## TODO: Get wm with wmctrl and open wm config based on NAME..... Not sure if needed.
       ;;
