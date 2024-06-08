@@ -22,3 +22,12 @@
          - ripgrep
          - bat
          - w3m
+- name: install i3
+  become: true
+  become_method: enable
+  ansible.builtin.package:
+    state: present
+    name:
+          - i3
+          - i3lock-color
+          - i3blocks
