@@ -1,0 +1,8 @@
+#!/bin/bash
+
+install_nm_dmenu() {
+  command -v gh && gh repo clone firecat53/networkmanager-dmenu /tmp/dmenu
+  sudo cp /tmp/dmenu/networkmanager/dmenu /usr/bin
+}
+
+install_nm_dmenu

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Created By: Qwertimer
+# Created On: "Sun 02 Jun 2024 22:09:17 ACST"
+# Project:
+#
+#cd /home/tim/repos/github.com/qwertimer/zet
+#find * -type f | fzf --preview 'bat --style numbers,changes --color=always --theme="Catppuccin Mocha" {}'
+#
+#
+fif() {
+  if [ ! "$#" -gt 0 ]; then echo "Need a string to search for!"; return 1; fi
+  rg --files-with-matches --no-messages "$1" | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$1' || rg --ignore-case --pretty --context 10 '$1' {}"
+}
+cd /home/tim/repos/github.com/qwertimer/zet && fif $@
