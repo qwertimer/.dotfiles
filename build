@@ -73,7 +73,9 @@ x_syms() {
 # --------------------------------- dircolors --------------------------------
   ln -sf "$DOT/.dircolors" "$HOME/.dircolors"
 # ----------------------------------- tmux -----------------------------------
-  ln -sf "$DOT/tmux/tmux.conf" "$HOME/.tmux.conf"
+  ln -sf "$DOT/tmux/.tmux.conf" "$HOME/.tmux.conf"
+  ln -sf "$DOT/tmux/tmux.reset.conf" "$HOME/.config/tmux/"
+
 # ------------------------------------ vim -----------------------------------
   ln -sf "$DOT/vim/.vimrc" "$HOME/.vimrc"
   ln -sf "$DOT/vim/.vimrc" "$HOME/.sshrc.d"
